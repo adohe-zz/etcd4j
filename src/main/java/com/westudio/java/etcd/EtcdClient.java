@@ -1,14 +1,22 @@
 package com.westudio.java.etcd;
 
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
+import org.apache.http.ProtocolException;
+import org.apache.http.client.RedirectStrategy;
+import org.apache.http.client.ServiceUnavailableRetryStrategy;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.HttpContext;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -29,9 +37,15 @@ public class EtcdClient {
     private final URI baseURI;
 
     private static CloseableHttpClient buildClient() {
-        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(DEFAULT_CONNECT_TIMEOUT).build();
+        RequestConfig requestConfig = RequestConfig.custom()
+            .setConnectTimeout(DEFAULT_CONNECT_TIMEOUT)
+            .setSocketTimeout(DEFAULT_CONNECT_TIMEOUT)
+            .build();
         CloseableHttpClient httpClient;
-        httpClient = HttpClients.custom().setDefaultRequestConfig(requestConfig).build();
+        httpClient = HttpClients.custom().setDefaultRequestConfig(requestConfig)
+            .setRedirectStrategy(new RedirectHandler())
+            .setServiceUnavailableRetryStrategy(new RetryHandler())
+            .build();
         return httpClient;
     }
 
@@ -101,6 +115,12 @@ public class EtcdClient {
     }
 
     private EtcdResponse execute(HttpUriRequest request) {
+        try {
+            CloseableHttpResponse httpResponse = httpClient.execute(request);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         return null;
     }
 
@@ -148,6 +168,32 @@ public class EtcdClient {
             return null;
         } catch (Exception e) {
             return "Error formatting response" + e.getMessage();
+        }
+    }
+
+    static class RedirectHandler implements RedirectStrategy {
+
+        @Override
+        public boolean isRedirected(HttpRequest httpRequest, HttpResponse httpResponse, HttpContext httpContext) throws ProtocolException {
+            return false;
+        }
+
+        @Override
+        public HttpUriRequest getRedirect(HttpRequest httpRequest, HttpResponse httpResponse, HttpContext httpContext) throws ProtocolException {
+            return null;
+        }
+    }
+
+    static class RetryHandler implements ServiceUnavailableRetryStrategy {
+
+        @Override
+        public boolean retryRequest(HttpResponse httpResponse, int i, HttpContext httpContext) {
+            return false;
+        }
+
+        @Override
+        public long getRetryInterval() {
+            return 0;
         }
     }
 }
