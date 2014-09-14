@@ -20,6 +20,6 @@ public class EtcdResponse {
 
     @Override
     public String toString() {
-        return super.toString();
+        return EtcdClient.format(this);
     }
 }
