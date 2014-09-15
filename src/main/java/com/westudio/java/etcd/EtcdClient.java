@@ -34,7 +34,7 @@ public class EtcdClient {
     private static final String URI_PREFIX = "v2/keys";
     private static final String DEFAULT_CHARSET = "UTF-8";
 
-    private static final int DEFAULT_CONNECT_TIMEOUT = 10 * 1000;
+    private static final int DEFAULT_CONNECT_TIMEOUT = 15 * 1000;
 
     private final URI baseURI;
 
@@ -67,16 +67,10 @@ public class EtcdClient {
      */
     public EtcdResponse get(String key) throws EtcdClientException {
         URI uri = buildUriWithKeyAndParams(key, null);
-        HttpGet httpGet = new HttpGet(uri);
+        HttpGet httpGet;
+        httpGet = new HttpGet(uri);
 
-        EtcdResponse response = execute(httpGet);
-        if (response.isError()) {
-            if (response.errorCode == 100) {
-                return null;
-            }
-        }
-
-        return response;
+        return execute(httpGet);
     }
 
     /**
@@ -120,8 +114,8 @@ public class EtcdClient {
 
     /**
      * Create a directory without ttl
-     * @param key
-     * @return
+     * @param key the key
+     * @return response
      */
     public EtcdResponse createDir(String key) throws EtcdClientException {
         return createDir(key, null, null);
@@ -217,6 +211,19 @@ public class EtcdClient {
     }
 
     /**
+     * List children under a key
+     * @param key the key
+     * @return response
+     * @throws EtcdClientException
+     */
+    public EtcdResponse listChildren(String key) throws EtcdClientException {
+        URI uri = buildUriWithKeyAndParams(key + "/", null);
+        HttpGet httpGet = new HttpGet(uri);
+
+        return execute(httpGet);
+    }
+
+    /**
      * General put method
      * @param key the key
      * @param data put data
@@ -234,11 +241,17 @@ public class EtcdClient {
         return execute(httpPut);
     }
 
+    /**
+     * Execute the specific HttpUriRequest
+     * @param request request instance
+     * @return EtcdResponse
+     * @throws EtcdClientException
+     */
     private EtcdResponse execute(HttpUriRequest request) throws EtcdClientException {
         try {
             return httpClient.execute(request, new JsonResponseHandler());
         } catch (IOException e) {
-            throw new EtcdClientException("Error execute request", e);
+            throw unwrap(e);
         }
     }
 
@@ -289,10 +302,26 @@ public class EtcdClient {
         }
     }
 
+    private EtcdClientException unwrap(IOException e) {
+        if (e instanceof EtcdClientException) {
+            return (EtcdClientException) e;
+        } else {
+            Throwable t = e.getCause();
+            if (t instanceof EtcdClientException) {
+                return (EtcdClientException) t;
+            } else {
+                return new EtcdClientException("Error execute request", e);
+            }
+        }
+    }
+
     private static EtcdResponse parseResponse(String json) throws EtcdClientException {
         EtcdResponse response;
         try {
             response = gson.fromJson(json, EtcdResponse.class);
+            if (response.isError()) {
+                throw new EtcdClientException("Error response", response);
+            }
         } catch (JsonParseException e) {
             throw new EtcdClientException("Error parsing response", e);
         }
@@ -311,14 +340,16 @@ public class EtcdClient {
         @Override
         public HttpUriRequest getRedirect(HttpRequest httpRequest, HttpResponse httpResponse, HttpContext httpContext) throws ProtocolException {
             String redirectUrl = httpResponse.getFirstHeader("location").getValue();
+            HttpRequestWrapper requestWrapper = (HttpRequestWrapper) httpRequest;
             HttpUriRequest uriRequest;
-            if (httpRequest instanceof HttpPut) {
+            HttpRequest origin = requestWrapper.getOriginal();
+            if (origin instanceof HttpPut) {
                 uriRequest = new HttpPut(redirectUrl);
-                ((HttpPut) uriRequest).setEntity(((HttpPut) httpRequest).getEntity());
-            } else if (httpRequest instanceof HttpPost) {
+                ((HttpPut) uriRequest).setEntity(((HttpPut) origin).getEntity());
+            } else if (origin instanceof HttpPost) {
                 uriRequest = new HttpPost(redirectUrl);
-                ((HttpPost) uriRequest).setEntity(((HttpPost) httpRequest).getEntity());
-            } else if (httpRequest instanceof HttpDelete) {
+                ((HttpPost) uriRequest).setEntity(((HttpPost) origin).getEntity());
+            } else if (origin instanceof HttpDelete) {
                 uriRequest = new HttpDelete(redirectUrl);
             } else {
                 uriRequest = new HttpGet(redirectUrl);
@@ -335,7 +366,6 @@ public class EtcdClient {
             int statusCode = httpResponse.getStatusLine().getStatusCode();
             // Retry 10 times
             return statusCode == 500 && i <= 10;
-
         }
 
         @Override
