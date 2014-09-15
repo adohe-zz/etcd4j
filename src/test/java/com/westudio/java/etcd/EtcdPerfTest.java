@@ -28,7 +28,7 @@ public class EtcdPerfTest {
     }
     @Test
     public void testPut() throws Exception{
-        int count = 10000;
+        int count = 4000;
         long start = System.nanoTime();
 
         for(int i = 0; i < count; i++) {
@@ -66,7 +66,7 @@ public class EtcdPerfTest {
                 (double)(count * 3 * 1e6 / time));
     }
 
-    @Test
+    /*@Test
     public void testMultThreadsPut() throws ExecutionException, InterruptedException, IOException {
         ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
@@ -116,5 +116,5 @@ public class EtcdPerfTest {
                 (double) (COUNT * 4 * 1e6 / time));
         es.shutdown();
 
-    }
+    }*/
 }
