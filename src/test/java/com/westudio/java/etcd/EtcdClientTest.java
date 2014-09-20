@@ -5,6 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 public class EtcdClientTest {
@@ -138,5 +139,70 @@ public class EtcdClientTest {
     public void testGetVersion() throws Exception {
         String version = this.client.getVersion();
         Assert.assertTrue(version.startsWith("etcd 0."));
+    }
+
+    @Test
+    public void testCreateDir() throws Exception {
+        String key = prefix + "/dir";
+
+        EtcdResponse result;
+
+        result = this.client.createDir(key, null, null);
+        Assert.assertTrue(result.node.dir);
+        Assert.assertEquals(result.node.key, key);
+    }
+
+    @Test
+    public void testDeleteDir() throws Exception {
+        String key = prefix + "/foo_dir/foo";
+
+        EtcdResponse result;
+
+        // Create a directory implicitly and the
+        // key is /foo_dir
+        result = this.client.set(key, "bar");
+        Assert.assertEquals(result.node.key, key);
+        Assert.assertEquals(result.node.value, "bar");
+
+        // Try to delete a non-empty directory
+        // with dir=true will get an error
+        result = this.client.deleteDir(prefix + "/foo_dir", false);
+        Assert.assertTrue(result.isError());
+
+        // Delete the non-empty directory with recursive=true
+        result = this.client.deleteDir(prefix + "/foo_dir", true);
+        Assert.assertEquals(result.action, "delete");
+        Assert.assertNotNull(result.prevNode);
+
+        // Create an empty directory explicitly
+        key = prefix + "/dir_two";
+        result = this.client.createDir(key, null, null);
+        Assert.assertEquals(key, result.node.key);
+        Assert.assertTrue(result.node.dir);
+
+        // Delete the empty directory
+        result = this.client.deleteDir(key, false);
+        Assert.assertEquals(result.action, "delete");
+    }
+
+    @Test
+    public void testListDir() throws Exception {
+        String key = prefix + "/foo_dir/foo";
+
+        EtcdResponse result;
+
+        // First crate a non-empty directory implicitly
+        result = this.client.set(key, "bar", null);
+
+        // Create another directory under the above directory
+        String keyTwo = prefix + "/foo_dir/dir_foo/dir";
+        result = this.client.set(keyTwo, "barbar", null);
+
+        // List dir with recursive=true
+        List<EtcdNode> nodes = this.client.listDir(key, true);
+        Assert.assertEquals((long) nodes.size(), (long)2);
+
+        // Delete the directory recursively
+        this.client.deleteDir(key, true);
     }
 }

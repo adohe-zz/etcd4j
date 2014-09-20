@@ -77,7 +77,7 @@ public class EtcdClient {
      * Changing the value of a key without ttl
      * @param key the key
      * @param value the value
-     * @return response
+     * @return response maybe a simple key node or a directory node
      */
     public EtcdResponse set(String key, String value) throws EtcdClientException {
         return set(key, value, null);
@@ -88,7 +88,7 @@ public class EtcdClient {
      * @param key the key
      * @param value the value
      * @param ttl the time-to-leave
-     * @return response
+     * @return response maybe a simple key node or a directory node
      */
     public EtcdResponse set(String key, String value, Integer ttl) throws EtcdClientException {
         List<BasicNameValuePair> data = new ArrayList<BasicNameValuePair>();
@@ -113,18 +113,9 @@ public class EtcdClient {
     }
 
     /**
-     * Create a directory without ttl
+     * Create a directory explicitly and you can't set the value
      * @param key the key
-     * @return response
-     */
-    public EtcdResponse createDir(String key) throws EtcdClientException {
-        return createDir(key, null, null);
-    }
-
-    /**
-     * Create a directory with ttl and prevExist
-     * @param key the key
-     * @param ttl the ttl
+     * @param ttl the ttl setting
      * @param prevExist exist before
      * @return response
      * @throws EtcdClientException
@@ -221,6 +212,35 @@ public class EtcdClient {
         HttpGet httpGet = new HttpGet(uri);
 
         return execute(httpGet);
+    }
+
+    /**
+     * Atomic compare and swap
+     * @param key the key
+     * @param value the new value
+     * @param params comparable conditions
+     * @return response
+     * @throws EtcdClientException
+     */
+    public EtcdResponse cas(String key, String value, Map<String, String> params) throws EtcdClientException {
+        List<BasicNameValuePair> data = new ArrayList<BasicNameValuePair>();
+        data.add(new BasicNameValuePair("value", value));
+
+        return put(key, data, params);
+    }
+
+    /**
+     * Atomic compare and delete
+     * @param key the key
+     * @param params comparable conditions
+     * @return response
+     * @throws EtcdClientException
+     */
+    public EtcdResponse cad(String key, Map<String, String> params) throws EtcdClientException {
+        URI uri = buildUriWithKeyAndParams(key, params);
+        HttpDelete delete = new HttpDelete(uri);
+
+        return execute(delete);
     }
 
     /**
@@ -380,7 +400,7 @@ public class EtcdClient {
         public EtcdResponse handleResponse(HttpResponse httpResponse) throws IOException {
             int statusCode = httpResponse.getStatusLine().getStatusCode();
             if (statusCode == 500) {
-                // Do if we still get 500 after 10 time retry
+                // Do if we still get 500 after 10 times retry
                 throw new EtcdClientException("Error after 10 times", 500);
             }
 
