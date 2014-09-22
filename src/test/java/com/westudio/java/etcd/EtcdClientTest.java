@@ -15,7 +15,7 @@ public class EtcdClientTest {
 
     @Before
     public void setUp() throws Exception {
-        client = new EtcdClient(new URI("http://etcd.soa.uat.qa.nt.ctripcorp.com"));
+        client = new EtcdClient(new URI("http://127.0.0.1:4001"));
         prefix = "/unittest-" + UUID.randomUUID().toString();
     }
 
@@ -166,8 +166,12 @@ public class EtcdClientTest {
 
         // Try to delete a non-empty directory
         // with dir=true will get an error
-        result = this.client.deleteDir(prefix + "/foo_dir", false);
-        Assert.assertTrue(result.isError());
+        try {
+            result = this.client.deleteDir(prefix + "/foo_dir", false);
+            Assert.fail();
+        } catch (EtcdClientException e) {
+            Assert.assertTrue(e.isEtcdError());
+        }
 
         // Delete the non-empty directory with recursive=true
         result = this.client.deleteDir(prefix + "/foo_dir", true);
@@ -199,7 +203,7 @@ public class EtcdClientTest {
         result = this.client.set(keyTwo, "barbar", null);
 
         // List dir with recursive=true
-        List<EtcdNode> nodes = this.client.listDir(key, true);
+        List<EtcdNode> nodes = this.client.listDir(prefix + "/foo_dir", true);
         Assert.assertEquals((long) nodes.size(), (long)2);
 
         // Delete the directory recursively

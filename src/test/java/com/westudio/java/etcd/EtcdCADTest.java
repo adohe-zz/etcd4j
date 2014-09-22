@@ -33,5 +33,9 @@ public class EtcdCADTest {
         Assert.assertEquals(true, result.isError());
         result = this.client.get(key);
         Assert.assertEquals("hello", result.node.value);
+        params.clear();
+        params.put("prevValue", "hello");
+        result = this.client.cad(key, params);
+        Assert.assertEquals("compareAndDelete", result.action);
     }
 }

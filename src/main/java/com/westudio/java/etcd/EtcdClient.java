@@ -339,6 +339,7 @@ public class EtcdClient {
         EtcdResponse response;
         try {
             response = gson.fromJson(json, EtcdResponse.class);
+            //TODO:UPDATE THE ERROR RESPONSE HANDLE
             if (response.isError()) {
                 throw new EtcdClientException("Error response", response);
             }
