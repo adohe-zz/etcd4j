@@ -30,6 +30,6 @@ public class EtcdClientException extends IOException {
     }
 
     public boolean isEtcdError() {
-        return response != null;
+        return (response != null && response.errorCode != null);
     }
 }
