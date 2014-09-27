@@ -10,8 +10,11 @@ import org.apache.http.client.ServiceUnavailableRetryStrategy;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
+import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.FutureRequestExecutionService;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.HttpRequestFutureTask;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
@@ -25,6 +28,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class EtcdClient {
 
@@ -37,6 +42,11 @@ public class EtcdClient {
     private static final int DEFAULT_CONNECT_TIMEOUT = 15 * 1000;
 
     private final URI baseURI;
+
+    // Future executor service
+    private static final ExecutorService executorService = Executors.newFixedThreadPool(10);
+    private static final FutureRequestExecutionService futureExecutorService = new FutureRequestExecutionService(
+            httpClient, executorService);
 
     private static CloseableHttpClient buildClient() {
         RequestConfig requestConfig = RequestConfig.custom()
@@ -244,6 +254,58 @@ public class EtcdClient {
     }
 
     /**
+     * Atomically create in-order keys
+     * @param key the key for the container directory
+     * @param value the value
+     * @return response
+     * @throws EtcdClientException
+     */
+    public EtcdResponse inOrderKeys(String key, String value) throws EtcdClientException {
+        List<BasicNameValuePair> data = new ArrayList<BasicNameValuePair>();
+        data.add(new BasicNameValuePair("value", value));
+
+        return post(key, data, null);
+    }
+
+    /**
+     * Enumerate the in-order keys as a sorted list
+     * @param key the directory key
+     * @return a sorted list of in-order keys
+     * @throws EtcdClientException
+     */
+    public List<EtcdNode> listInOrderKeys(String key) throws EtcdClientException {
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("recursive", String.valueOf(true));
+        params.put("sorted", String.valueOf(true));
+
+        URI uri = buildUriWithKeyAndParams(key, params);
+        HttpGet httpGet = new HttpGet(uri);
+
+        EtcdResponse response = execute(httpGet);
+
+        if (response == null || response.node == null) {
+            return null;
+        }
+
+        return response.node.nodes;
+    }
+
+    /**
+     * Watch for a change on a key
+     * @param key the key
+     * @return a future task
+     */
+    public HttpRequestFutureTask<EtcdResponse> watch(String key) {
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("wait", String.valueOf(true));
+
+        URI uri = buildUriWithKeyAndParams(key, params);
+        HttpGet httpGet = new HttpGet(uri);
+
+        return futureExecutorService.execute(httpGet, HttpClientContext.create(), new JsonResponseHandler());
+    }
+
+    /**
      * General put method
      * @param key the key
      * @param data put data
@@ -259,6 +321,24 @@ public class EtcdClient {
         httpPut.setEntity(formEntity);
 
         return execute(httpPut);
+    }
+
+    /**
+     * General post method
+     * @param key the key
+     * @param data post data
+     * @param params url params
+     * @return response
+     * @throws EtcdClientException
+     */
+    private EtcdResponse post(String key, List<BasicNameValuePair> data, Map<String, String> params) throws EtcdClientException {
+        URI uri = buildUriWithKeyAndParams(key, params);
+        HttpPost httpPost = new HttpPost(uri);
+
+        UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(data, Charset.forName(DEFAULT_CHARSET));
+        httpPost.setEntity(formEntity);
+
+        return execute(httpPost);
     }
 
     /**
@@ -339,7 +419,7 @@ public class EtcdClient {
         EtcdResponse response;
         try {
             response = gson.fromJson(json, EtcdResponse.class);
-            //TODO:UPDATE THE ERROR RESPONSE HANDLE
+            // Throw exception when the response has error
             if (response.isError()) {
                 throw new EtcdClientException("Error response", response);
             }
