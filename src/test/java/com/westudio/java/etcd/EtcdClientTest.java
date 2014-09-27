@@ -15,7 +15,7 @@ public class EtcdClientTest {
 
     @Before
     public void setUp() throws Exception {
-        client = new EtcdClient(new URI("http://127.0.0.1:4001"));
+        client = new EtcdClient(URI.create("http://127.0.0.1:4001"));
         prefix = "/unittest-" + UUID.randomUUID().toString();
     }
 
