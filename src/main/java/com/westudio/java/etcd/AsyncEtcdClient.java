@@ -10,20 +10,16 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
+import org.apache.http.*;
+import org.apache.http.client.RedirectStrategy;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.*;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
@@ -58,6 +54,7 @@ public class AsyncEtcdClient {
         CloseableHttpAsyncClient httpAsyncClient;
         httpAsyncClient = HttpAsyncClients.custom()
                 .setDefaultRequestConfig(config)
+                .setRedirectStrategy(new RedirectHandler())
                 .build();
         httpAsyncClient.start();
 
@@ -424,22 +421,6 @@ public class AsyncEtcdClient {
             @Override
             public ListenableFuture<JsonResponse> apply(final HttpResponse httpResponse) throws Exception {
 
-                // Workaround for 307 response
-                if (httpResponse.getStatusLine().getStatusCode() == 307) {
-                    Header location = httpResponse.getFirstHeader("location");
-                    HttpUriRequest redirectRequest;
-                    if (request instanceof HttpPut) {
-                        redirectRequest = new HttpPut(location.getValue());
-                        ((HttpPut) redirectRequest).setEntity(((HttpPut) request).getEntity());
-                    } else if (request instanceof HttpDelete) {
-                        redirectRequest = new HttpDelete(location.getValue());
-                    } else {
-                        redirectRequest = new HttpGet(location.getValue());
-                    }
-
-                    return asyncExecuteJson(redirectRequest, expectedHttpStatusCodes);
-                }
-
                 JsonResponse jsonResponse = extractJsonResponse(httpResponse, expectedHttpStatusCodes);
                 return Futures.immediateFuture(jsonResponse);
             }
@@ -564,5 +545,35 @@ public class AsyncEtcdClient {
         }
 
         return false;
+    }
+
+    static class RedirectHandler implements RedirectStrategy {
+
+        @Override
+        public boolean isRedirected(HttpRequest httpRequest, HttpResponse httpResponse, HttpContext httpContext) throws ProtocolException {
+            int statusCode = httpResponse.getStatusLine().getStatusCode();
+            return (statusCode >= 300 && statusCode < 400);
+        }
+
+        @Override
+        public HttpUriRequest getRedirect(HttpRequest httpRequest, HttpResponse httpResponse, HttpContext httpContext) throws ProtocolException {
+            String redirectUrl = httpResponse.getFirstHeader("location").getValue();
+            HttpRequestWrapper requestWrapper = (HttpRequestWrapper) httpRequest;
+            HttpUriRequest uriRequest;
+            HttpRequest origin = requestWrapper.getOriginal();
+            if (origin instanceof HttpPut) {
+                uriRequest = new HttpPut(redirectUrl);
+                ((HttpPut) uriRequest).setEntity(((HttpPut) origin).getEntity());
+            } else if (origin instanceof HttpPost) {
+                uriRequest = new HttpPost(redirectUrl);
+                ((HttpPost) uriRequest).setEntity(((HttpPost) origin).getEntity());
+            } else if (origin instanceof HttpDelete) {
+                uriRequest = new HttpDelete(redirectUrl);
+            } else {
+                uriRequest = new HttpGet(redirectUrl);
+            }
+
+            return uriRequest;
+        }
     }
 }
