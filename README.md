@@ -8,7 +8,7 @@ This has not been put into the maven repository.
 
 ## Usage
 
-Check out the [EtcdClientTest.java] for more details about how this is used, but here's a quick code example:
+Check out the [EtcdClientTest.java] for more details about how to use this library, but here's a quick code example:
 
 ```
 EtcdClient client = new EtcdClient(URI.create("http://127.0.0.1:4001"));
