@@ -32,8 +32,14 @@ public class EtcdCASTest {
 
         Map<String, String> params = new HashMap<String, String>();
         params.put("prevExist", String.valueOf(false));
-        result = this.client.cas(key, "world", params);
-        Assert.assertEquals(true, result.isError());
+
+        try {
+            this.client.cas(key, "world", params);
+            Assert.fail();
+        } catch (EtcdClientException e) {
+            Assert.assertTrue(e.isEtcdError());
+        }
+
         result = this.client.get(key);
         Assert.assertEquals("hello", result.node.value);
 

@@ -22,6 +22,9 @@ public class EtcdInOrderTest {
 
         EtcdResponse result;
 
+        result = this.client.deleteDir(key, true);
+        Assert.assertEquals("delete", result.action);
+
         result = this.client.inOrderKeys(key, "Job1");
         Assert.assertEquals(result.node.value, "Job1");
         int k1 = Integer.valueOf(result.node.key.substring(result.node.key.lastIndexOf("/") + 1));
