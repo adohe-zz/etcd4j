@@ -4,13 +4,49 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.westudio</groupId>
+    <groupId>com.xqbase</groupId>
     <artifactId>etcd4j</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>etcd4j</name>
+    <url>https://github.com/AdoHe/etcd4j</url>
+
+    <description>A more powerful and stable etcd java client</description>
+    <scm>
+        <connection>scm:git:git@github.com:AdoHe/etcd4j.git</connection>
+        <developerConnection>scm:git:git@github.com:AdoHe/etcd4j.git</developerConnection>
+        <url>https://github.com/AdoHe/etcd4j</url>
+    </scm>
+    <licenses>
+        <license>
+            <name>The MIT License (MIT)</name>
+            <url>http://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <id>AdoHe</id>
+            <name>TonyAdo</name>
+            <email>coolhzb@163.com</email>
+            <url>https://github.com/AdoHe</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </developer>
+    </developers>
 
     <properties>
         <artifactTargetPath>${project.build.directory}</artifactTargetPath>
     </properties>
+
+    <distributionManagement>
+        <repository>
+            <id>sonatype</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </repository>
+    </distributionManagement>
 
     <dependencies>
         <dependency>
