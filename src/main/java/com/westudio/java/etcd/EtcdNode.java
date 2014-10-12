@@ -20,6 +20,6 @@ public class EtcdNode {
 
     @Override
     public String toString() {
-        return EtcdClient.format(this);
+        return Json.format(this);
     }
 }
