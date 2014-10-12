@@ -1,6 +1,8 @@
 package com.westudio.java.etcd;
 
 import com.google.common.util.concurrent.ListenableFuture;
+
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,7 +22,13 @@ public class AsyncEtcdClientTest {
     @Before
     public void setUp() throws Exception {
         this.prefix = "/unittest-" + UUID.randomUUID().toString();
-        this.client = new AsyncEtcdClient(URI.create("http://127.0.0.1:4001/"));
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        if (client != null) {
+            client.close();
+        }
     }
 
     @Test

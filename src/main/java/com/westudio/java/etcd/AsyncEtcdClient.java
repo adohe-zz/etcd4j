@@ -37,7 +37,6 @@ import java.util.concurrent.ExecutionException;
  */
 public class AsyncEtcdClient implements Closeable {
     
-    private static final CloseableHttpAsyncClient httpClient = buildHttpClient();
     private static final Gson gson = new GsonBuilder().create();
 
     private static final String URI_PREFIX = "v2/keys";
@@ -46,8 +45,9 @@ public class AsyncEtcdClient implements Closeable {
     private static final int DEFAULT_CONNECT_TIMEOUT = 10 * 1000;
 
     private final URI baseUri;
+    private final CloseableHttpAsyncClient httpClient = buildHttpClient();
 
-    private static CloseableHttpAsyncClient buildHttpClient() {
+    private CloseableHttpAsyncClient buildHttpClient() {
         RequestConfig config = RequestConfig.custom()
                 .setConnectTimeout(DEFAULT_CONNECT_TIMEOUT)
                 .setSocketTimeout(DEFAULT_CONNECT_TIMEOUT)
