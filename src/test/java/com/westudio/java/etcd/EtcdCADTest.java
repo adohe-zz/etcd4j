@@ -29,8 +29,13 @@ public class EtcdCADTest {
 
         Map<String, String> params = new HashMap<String, String>();
         params.put("prevValue", "world");
-        result = this.client.cad(key, params);
-        Assert.assertEquals(true, result.isError());
+        try{
+            this.client.cad(key, params);
+            Assert.fail();
+        } catch (EtcdClientException e) {
+            Assert.assertTrue(e.isEtcdError());
+        }
+
         result = this.client.get(key);
         Assert.assertEquals("hello", result.node.value);
         params.clear();
