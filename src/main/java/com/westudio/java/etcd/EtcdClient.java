@@ -19,6 +19,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -31,7 +32,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class EtcdClient {
+public class EtcdClient implements Closeable {
 
     private static final CloseableHttpClient httpClient = buildClient();
     private static final Gson gson = new GsonBuilder().create();
@@ -428,6 +429,11 @@ public class EtcdClient {
         }
 
         return response;
+    }
+
+    @Override
+    public void close() throws IOException {
+        httpClient.close();
     }
 
     static class RedirectHandler implements RedirectStrategy {

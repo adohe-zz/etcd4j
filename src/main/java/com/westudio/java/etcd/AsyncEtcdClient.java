@@ -22,6 +22,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -34,7 +35,7 @@ import java.util.concurrent.ExecutionException;
 /**
  * Asynchronous Etcd Client
  */
-public class AsyncEtcdClient {
+public class AsyncEtcdClient implements Closeable {
     
     private static final CloseableHttpAsyncClient httpClient = buildHttpClient();
     private static final Gson gson = new GsonBuilder().create();
@@ -457,6 +458,11 @@ public class AsyncEtcdClient {
         } else {
             return new EtcdClientException("Failed to execute request", e);
         }
+    }
+
+    @Override
+    public void close() throws IOException {
+        httpClient.close();
     }
 
     static class JsonResponse {
