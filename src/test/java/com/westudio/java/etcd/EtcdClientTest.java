@@ -1,5 +1,6 @@
 package com.westudio.java.etcd;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,6 +18,13 @@ public class EtcdClientTest {
     public void setUp() throws Exception {
         client = new EtcdClient(URI.create("http://127.0.0.1:4001"));
         prefix = "/unittest-" + UUID.randomUUID().toString();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        if (client != null) {
+            client.close();
+        }
     }
 
     @Test

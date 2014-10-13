@@ -19,6 +19,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -31,9 +32,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class EtcdClient {
+public class EtcdClient implements Closeable {
 
-    private static final CloseableHttpClient httpClient = buildClient();
     private static final Gson gson = new GsonBuilder().create();
 
     private static final String URI_PREFIX = "v2/keys";
@@ -41,14 +41,15 @@ public class EtcdClient {
 
     private static final int DEFAULT_CONNECT_TIMEOUT = 15 * 1000;
 
-    private final URI baseURI;
-
     // Future executor service
     private static final ExecutorService executorService = Executors.newFixedThreadPool(10);
-    private static final FutureRequestExecutionService futureExecutorService = new FutureRequestExecutionService(
-            httpClient, executorService);
 
-    private static CloseableHttpClient buildClient() {
+    private final URI baseURI;
+    private final CloseableHttpClient httpClient = buildClient();
+    private final FutureRequestExecutionService futureExecutorService =
+            new FutureRequestExecutionService(httpClient, executorService);
+
+    private CloseableHttpClient buildClient() {
         RequestConfig requestConfig = RequestConfig.custom()
             .setConnectTimeout(DEFAULT_CONNECT_TIMEOUT)
             .setSocketTimeout(DEFAULT_CONNECT_TIMEOUT)
@@ -428,6 +429,11 @@ public class EtcdClient {
         }
 
         return response;
+    }
+
+    @Override
+    public void close() throws IOException {
+        httpClient.close();
     }
 
     static class RedirectHandler implements RedirectStrategy {
