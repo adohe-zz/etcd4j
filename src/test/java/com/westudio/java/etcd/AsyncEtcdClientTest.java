@@ -2,6 +2,7 @@ package com.westudio.java.etcd;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
+import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -13,6 +14,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import static org.hamcrest.CoreMatchers.containsString;
 
 public class AsyncEtcdClientTest {
 
@@ -65,8 +68,15 @@ public class AsyncEtcdClientTest {
 
         EtcdResponse result;
 
-        result = this.client.get(key);
-        Assert.assertNull(result);
+        try {
+            this.client.get(key);
+            Assert.fail();
+        } catch (EtcdClientException e) {
+            Assert.assertTrue(e.isEtcdError());
+            Assert.assertEquals(Integer.valueOf(100), e.errorResponse.errorCode);
+            MatcherAssert.assertThat(e.errorResponse.message.toLowerCase(),
+                                     containsString("not found"));
+        }
     }
 
     @Test
@@ -86,8 +96,14 @@ public class AsyncEtcdClientTest {
         Assert.assertNotNull(result.prevNode);
         Assert.assertEquals("hello", result.prevNode.value);
 
-        result = this.client.get(key);
-        Assert.assertNull(result);
+        try {
+            this.client.get(key);
+        } catch (EtcdClientException e) {
+            Assert.assertTrue(e.isEtcdError());
+            Assert.assertEquals(Integer.valueOf(100), e.errorResponse.errorCode);
+            MatcherAssert.assertThat(e.errorResponse.message.toLowerCase(),
+                                     containsString("not found"));
+        }
     }
 
     @Test
@@ -99,6 +115,9 @@ public class AsyncEtcdClientTest {
             Assert.fail();
         } catch (EtcdClientException e) {
             Assert.assertTrue(e.isEtcdError());
+            Assert.assertEquals(Integer.valueOf(100), e.errorResponse.errorCode);
+            MatcherAssert.assertThat(e.errorResponse.message.toLowerCase(),
+                                     containsString("not found"));
         }
     }
 
@@ -118,8 +137,15 @@ public class AsyncEtcdClientTest {
         // TTL was redefined to mean TTL + 0.5s (Issue #306)
         Thread.sleep(3000);
 
-        result = this.client.get(key);
-        Assert.assertNull(result);
+        try {
+            this.client.get(key);
+            Assert.fail();
+        } catch (EtcdClientException e) {
+            Assert.assertTrue(e.isEtcdError());
+            Assert.assertEquals(Integer.valueOf(100), e.errorResponse.errorCode);
+            MatcherAssert.assertThat(e.errorResponse.message.toLowerCase(),
+                                     containsString("not found"));
+        }
     }
 
     @Test
@@ -134,15 +160,42 @@ public class AsyncEtcdClientTest {
 
         Map<String, String> params = new HashMap<String, String>();
         params.put("prevExist", String.valueOf(false));
-        result = this.client.cas(key, "world", params);
-        Assert.assertEquals(true, result.isError());
+
+        try {
+            this.client.cas(key, "world", params);
+            Assert.fail();
+        } catch (EtcdClientException e) {
+            Assert.assertTrue(e.isEtcdError());
+            Assert.assertEquals(Integer.valueOf(105), e.errorResponse.errorCode);
+            MatcherAssert.assertThat(e.errorResponse.message.toLowerCase(),
+                                     containsString("already exists"));
+        }
+
+        result = this.client.get(key);
+        Assert.assertEquals("hello", result.node.value);
+
+        params.clear();
+        params.put("prevValue", "not this");
+        try {
+            this.client.cas(key, "world", params);
+            Assert.fail();
+        } catch (EtcdClientException e) {
+            Assert.assertTrue(e.isEtcdError());
+            Assert.assertEquals(Integer.valueOf(101), e.errorResponse.errorCode);
+            MatcherAssert.assertThat(e.errorResponse.message.toLowerCase(),
+                                     containsString("compare failed"));
+        }
+
         result = this.client.get(key);
         Assert.assertEquals("hello", result.node.value);
 
         params.clear();
         params.put("prevValue", "hello");
         result = this.client.cas(key, "world", params);
-        Assert.assertEquals(false, result.isError());
+        Assert.assertEquals("compareAndSwap", result.action);
+        Assert.assertEquals("world", result.node.value);
+        Assert.assertEquals("hello", result.prevNode.value);
+
         result = this.client.get(key);
         Assert.assertEquals("world", result.node.value);
     }
@@ -155,14 +208,44 @@ public class AsyncEtcdClientTest {
 
         result = this.client.set(key, "hello");
         result = this.client.get(key);
+        long prevIndex = result.node.modifiedIndex;
         Assert.assertEquals("hello", result.node.value);
 
         Map<String, String> params = new HashMap<String, String>();
-        params.put("prevValue", "world");
-        result = this.client.cad(key, params);
-        Assert.assertEquals(true, result.isError());
+        params.put("prevValue", "not this");
+        try{
+            this.client.cad(key, params);
+            Assert.fail();
+        } catch (EtcdClientException e) {
+            Assert.assertTrue(e.isEtcdError());
+            Assert.assertEquals(Integer.valueOf(101), e.errorResponse.errorCode);
+            MatcherAssert.assertThat(e.errorResponse.message.toLowerCase(),
+                                     containsString("compare failed"));
+        }
+
         result = this.client.get(key);
         Assert.assertEquals("hello", result.node.value);
+
+        params.clear();
+        params.put("prevIndex", Long.toString(prevIndex - 1));
+        try{
+            this.client.cad(key, params);
+            Assert.fail();
+        } catch (EtcdClientException e) {
+            Assert.assertTrue(e.isEtcdError());
+            Assert.assertEquals(Integer.valueOf(101), e.errorResponse.errorCode);
+            MatcherAssert.assertThat(e.errorResponse.message.toLowerCase(),
+                                     containsString("compare failed"));
+        }
+
+        result = this.client.get(key);
+        Assert.assertEquals("hello", result.node.value);
+
+        params.clear();
+        params.put("prevValue", "hello");
+        result = this.client.cad(key, params);
+        Assert.assertEquals("compareAndDelete", result.action);
+        Assert.assertEquals("hello", result.prevNode.value);
     }
 
     @Test
@@ -170,7 +253,6 @@ public class AsyncEtcdClientTest {
         String key = prefix + "/watch";
 
         EtcdResponse result = this.client.set(key + "/f2", "f2");
-        Assert.assertTrue(!result.isError());
         Assert.assertNotNull(result.node);
         Assert.assertEquals("f2", result.node.value);
 
@@ -188,14 +270,12 @@ public class AsyncEtcdClientTest {
         Assert.assertFalse(watchFuture.isDone());
 
         result = this.client.set(key + "/f1", "f1");
-        Assert.assertTrue(!result.isError());
         Assert.assertNotNull(result.node);
         Assert.assertEquals("f1", result.node.value);
 
         EtcdResponse watchResult = watchFuture.get(100, TimeUnit.MILLISECONDS);
 
         Assert.assertNotNull(watchResult);
-        Assert.assertTrue(!watchResult.isError());
         Assert.assertNotNull(watchResult.node);
 
         {

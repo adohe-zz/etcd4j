@@ -7,8 +7,6 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import org.apache.http.*;
 import org.apache.http.client.RedirectStrategy;
@@ -36,8 +34,6 @@ import java.util.concurrent.ExecutionException;
  * Asynchronous Etcd Client
  */
 public class AsyncEtcdClient implements Closeable {
-    
-    private static final Gson gson = new GsonBuilder().create();
 
     private static final String URI_PREFIX = "v2/keys";
     private static final String DEFAULT_CHARSET = "UTF-8";
@@ -80,14 +76,7 @@ public class AsyncEtcdClient implements Closeable {
         URI uri = buildUriWithKeyAndParams(key, null);
         HttpGet httpGet = new HttpGet(uri);
 
-        EtcdResponse result = syncExecute(httpGet, new int[] {200, 404}, 100);
-        if (result.isError()) {
-            if (result.errorCode == 100) {
-                return null;
-            }
-        }
-
-        return result;
+        return syncExecute(httpGet, 200);
     }
 
     /**
@@ -114,7 +103,7 @@ public class AsyncEtcdClient implements Closeable {
             list.add(new BasicNameValuePair("ttl", String.valueOf(ttl)));
         }
 
-        return put(key, list, null, new int[]{200, 201});
+        return put(key, list, null, 200, 201);
     }
 
     /**
@@ -126,7 +115,7 @@ public class AsyncEtcdClient implements Closeable {
         URI uri = buildUriWithKeyAndParams(key, null);
         HttpDelete delete = new HttpDelete(uri);
 
-        return syncExecute(delete, new int[]{200, 404});
+        return syncExecute(delete, 200);
     }
 
     /**
@@ -153,7 +142,7 @@ public class AsyncEtcdClient implements Closeable {
             data.add(new BasicNameValuePair("ttl", String.valueOf(ttl)));
         }
 
-        return put(key, data, null, new int[]{200, 201});
+        return put(key, data, null, 200, 201);
     }
 
     /**
@@ -174,7 +163,7 @@ public class AsyncEtcdClient implements Closeable {
             data.add(new BasicNameValuePair("prevExist", String.valueOf(prevExist)));
         }
 
-        return put(key, data, null, new int[]{200, 201});
+        return put(key, data, null, 200, 201);
     }
 
     /**
@@ -214,7 +203,7 @@ public class AsyncEtcdClient implements Closeable {
         URI uri = buildUriWithKeyAndParams(key, params);
 
         HttpDelete httpDelete = new HttpDelete(uri);
-        return syncExecute(httpDelete, new int[] {202});
+        return syncExecute(httpDelete, 202);
     }
 
     /**
@@ -229,7 +218,7 @@ public class AsyncEtcdClient implements Closeable {
         List<BasicNameValuePair> data = Lists.newArrayList();
         data.add(new BasicNameValuePair("value", value));
 
-        return put(key, data, params, new int[] {200, 412}, 101, 105);
+        return put(key, data, params, 200); // new int[] {412}, 101, 105
     }
 
     /**
@@ -243,7 +232,7 @@ public class AsyncEtcdClient implements Closeable {
         URI uri = buildUriWithKeyAndParams(key, params);
         HttpDelete httpDelete = new HttpDelete(uri);
 
-        return syncExecute(httpDelete, new int[] {200, 412}, 101);
+        return syncExecute(httpDelete, 200); // new int[] {412}, 101
     }
 
     /**
@@ -269,7 +258,7 @@ public class AsyncEtcdClient implements Closeable {
             params.put("waitIndex", String.valueOf(index));
         }
         if (recursive) {
-            params.put("recursive", String.valueOf(recursive));
+            params.put("recursive", String.valueOf(true));
         }
 
         URI uri = buildUriWithKeyAndParams(key, params);
@@ -307,7 +296,7 @@ public class AsyncEtcdClient implements Closeable {
 
         HttpGet httpGet = new HttpGet(uri);
 
-        return syncExecute(httpGet, new int[] {200});
+        return syncExecute(httpGet, 200);
     }
 
     /**
@@ -325,7 +314,7 @@ public class AsyncEtcdClient implements Closeable {
         URI uri = buildUriWithKeyAndParams(key, params);
         HttpGet httpGet = new HttpGet(uri);
 
-        return syncExecute(httpGet, new int[]{200});
+        return syncExecute(httpGet, 200);
     }
 
     // Build url with key and url params
@@ -362,29 +351,23 @@ public class AsyncEtcdClient implements Closeable {
         }
     }
 
-    public static String format(Object obj) {
-        try {
-            return gson.toJson(obj);
-        } catch (Exception e) {
-            return "Error formatting response" + e.getMessage();
-        }
-    }
-
     // The basic put operation
-    private EtcdResponse put(String key, List<BasicNameValuePair> data, Map<String, String> params, int[] httpErrorCodes,
-                            int... expectedErrorCodes) throws EtcdClientException {
+    private EtcdResponse put(String key, List<BasicNameValuePair> data,
+                             Map<String, String> params,
+                             int... expectedHttpStatusCodes) throws EtcdClientException {
         URI uri = buildUriWithKeyAndParams(key, params);
         HttpPut httpPut = new HttpPut(uri);
 
         UrlEncodedFormEntity entity = new UrlEncodedFormEntity(data, Charsets.UTF_8);
         httpPut.setEntity(entity);
 
-        return syncExecute(httpPut, httpErrorCodes, expectedErrorCodes);
+        return syncExecute(httpPut, expectedHttpStatusCodes);
     }
 
-    private EtcdResponse syncExecute(HttpUriRequest request, int[] expectedHttpStatusCodes, final int... exceptedErrorCodes) throws EtcdClientException {
+    private EtcdResponse syncExecute(final HttpUriRequest request,
+                                     final int... expectedHttpStatusCodes) throws EtcdClientException {
         try {
-            return asyncExecute(request, expectedHttpStatusCodes, exceptedErrorCodes).get();
+            return asyncExecute(request, expectedHttpStatusCodes).get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
 
@@ -394,7 +377,20 @@ public class AsyncEtcdClient implements Closeable {
         }
     }
 
-    private JsonResponse syncExecuteJson(HttpUriRequest request, int... exceptedHttpStatusCodes) throws EtcdClientException {
+    private ListenableFuture<EtcdResponse> asyncExecute(final HttpUriRequest request,
+                                                        final int[] expectedHttpStatusCodes) {
+        ListenableFuture<JsonResponse> response = asyncExecuteJson(request,
+                                                                   expectedHttpStatusCodes);
+        return Futures.transform(response, new AsyncFunction<JsonResponse, EtcdResponse>() {
+            @Override
+            public ListenableFuture<EtcdResponse> apply(JsonResponse jsonResponse) throws Exception {
+                EtcdResponse result = jsonToEtcdResponse(jsonResponse);
+                return Futures.immediateFuture(result);
+            }
+        });
+    }
+    private JsonResponse syncExecuteJson(final HttpUriRequest request,
+                                         final int... exceptedHttpStatusCodes) throws EtcdClientException {
         try {
             return asyncExecuteJson(request, exceptedHttpStatusCodes).get();
         } catch (InterruptedException e) {
@@ -404,25 +400,16 @@ public class AsyncEtcdClient implements Closeable {
             throw unwrap(e);
         }
     }
-    private ListenableFuture<EtcdResponse> asyncExecute(HttpUriRequest request, int[] expectedHttpStatusCodes, final int... excptedErrorCodes) {
-        ListenableFuture<JsonResponse> response = asyncExecuteJson(request, expectedHttpStatusCodes);
-        return Futures.transform(response, new AsyncFunction<JsonResponse, EtcdResponse>() {
-            @Override
-            public ListenableFuture<EtcdResponse> apply(JsonResponse jsonResponse) throws Exception {
-                EtcdResponse result = jsonToEtcdResponse(jsonResponse, excptedErrorCodes);
-                return Futures.immediateFuture(result);
-            }
-        });
-    }
 
-    private ListenableFuture<JsonResponse> asyncExecuteJson(final HttpUriRequest request, final int[] expectedHttpStatusCodes) {
+    private ListenableFuture<JsonResponse> asyncExecuteJson(final HttpUriRequest request,
+                                                            final int[] expectedHttpStatusCodes) {
         ListenableFuture<HttpResponse> response = asyncExecuteHttp(request);
 
         return Futures.transform(response, new AsyncFunction<HttpResponse, JsonResponse>() {
             @Override
             public ListenableFuture<JsonResponse> apply(final HttpResponse httpResponse) throws Exception {
-
-                JsonResponse jsonResponse = extractJsonResponse(httpResponse, expectedHttpStatusCodes);
+                JsonResponse jsonResponse = extractJsonResponse(httpResponse,
+                                                                expectedHttpStatusCodes);
                 return Futures.immediateFuture(jsonResponse);
             }
         });
@@ -475,7 +462,7 @@ public class AsyncEtcdClient implements Closeable {
         }
     }
 
-    private JsonResponse extractJsonResponse(HttpResponse response, int[] expectedHttpStatusCode) throws EtcdClientException {
+    private JsonResponse extractJsonResponse(HttpResponse response, int[] expectedHttpStatusCodes) throws EtcdClientException {
         try {
             StatusLine statusLine = response.getStatusLine();
             int statusCode = statusLine.getStatusCode();
@@ -490,12 +477,19 @@ public class AsyncEtcdClient implements Closeable {
                 }
             }
 
-            if (!contains(expectedHttpStatusCode, statusCode)) {
-                if (statusCode == 404 && json != null) {
-                    // More info in json
+            if (!contains(expectedHttpStatusCodes, statusCode)) {
+                if (json != null) {
+                    try {
+                        final EtcdErrorResponse errorResponse = jsonToEtcdErrorResponse(json);
+                        throw new EtcdClientException(errorResponse.message, errorResponse);
+                    } catch (JsonParseException je) {
+                        throw new EtcdClientException("Unexpected response from etcd: " +
+                                                      json, je);
+                    }
                 } else {
-                    throw new EtcdClientException("Error response from etcd: " + statusLine.getReasonPhrase(),
-                            statusCode);
+                    throw new EtcdClientException("Unexpected status code response from etcd: " +
+                                                  statusLine.getReasonPhrase(),
+                                                  statusCode);
                 }
             }
 
@@ -505,31 +499,24 @@ public class AsyncEtcdClient implements Closeable {
         }
     }
 
-    private EtcdResponse jsonToEtcdResponse(JsonResponse jsonResponse, int... exceptedErrorCodes) throws EtcdClientException {
+    private EtcdResponse jsonToEtcdResponse(JsonResponse jsonResponse) throws EtcdClientException {
         if (jsonResponse == null || jsonResponse.json == null) {
             return null;
         }
 
-        EtcdResponse result = parseEtcdResponse(jsonResponse.json);
-
-        if (result.isError()) {
-            if (!contains(exceptedErrorCodes, result.errorCode)) {
-                throw new EtcdClientException(result.message, result);
-            }
-        }
-
-        return result;
-    }
-
-    private EtcdResponse parseEtcdResponse(String json) throws EtcdClientException{
-        EtcdResponse result;
         try {
-            result = gson.fromJson(json, EtcdResponse.class);
+            return Json.fromJson(jsonResponse.json, EtcdResponse.class);
         } catch (JsonParseException e) {
             throw new EtcdClientException("Error parsing response", e);
         }
+    }
 
-        return result;
+    private EtcdErrorResponse jsonToEtcdErrorResponse(String json) throws EtcdClientException {
+        try {
+            return Json.fromJson(json, EtcdErrorResponse.class);
+        } catch (JsonParseException e) {
+            throw new EtcdClientException("Error parsing response", e);
+        }
     }
 
     private static void close(HttpResponse response) {

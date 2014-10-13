@@ -5,24 +5,24 @@ import java.io.IOException;
 public class EtcdClientException extends IOException {
 
     final Integer httpStatusCode;
-    final EtcdResponse response;
+    final EtcdErrorResponse errorResponse;
 
     public EtcdClientException(String message, Throwable cause) {
         super(message, cause);
         this.httpStatusCode = null;
-        this.response = null;
+        this.errorResponse = null;
     }
 
     public EtcdClientException(String message, int httpStatusCode) {
         super(message + "(" + httpStatusCode + ")");
         this.httpStatusCode = httpStatusCode;
-        this.response = null;
+        this.errorResponse = null;
     }
 
-    public EtcdClientException(String message, EtcdResponse response) {
+    public EtcdClientException(String message, EtcdErrorResponse errorResponse) {
         super(message);
         this.httpStatusCode = null;
-        this.response = response;
+        this.errorResponse = errorResponse;
     }
 
     public boolean isHttpError() {
@@ -30,6 +30,6 @@ public class EtcdClientException extends IOException {
     }
 
     public boolean isEtcdError() {
-        return (response != null && response.errorCode != null);
+        return (errorResponse != null && errorResponse.errorCode != null);
     }
 }

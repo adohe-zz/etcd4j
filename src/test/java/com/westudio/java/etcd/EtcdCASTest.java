@@ -1,5 +1,6 @@
 package com.westudio.java.etcd;
 
+import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -8,6 +9,8 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import static org.hamcrest.CoreMatchers.containsString;
 
 public class EtcdCASTest {
 
@@ -38,6 +41,24 @@ public class EtcdCASTest {
             Assert.fail();
         } catch (EtcdClientException e) {
             Assert.assertTrue(e.isEtcdError());
+            Assert.assertEquals(Integer.valueOf(105), e.errorResponse.errorCode);
+            MatcherAssert.assertThat(e.errorResponse.message.toLowerCase(),
+                                     containsString("already exists"));
+        }
+
+        result = this.client.get(key);
+        Assert.assertEquals("hello", result.node.value);
+
+        params.clear();
+        params.put("prevValue", "not this");
+        try {
+            this.client.cas(key, "world", params);
+            Assert.fail();
+        } catch (EtcdClientException e) {
+            Assert.assertTrue(e.isEtcdError());
+            Assert.assertEquals(Integer.valueOf(101), e.errorResponse.errorCode);
+            MatcherAssert.assertThat(e.errorResponse.message.toLowerCase(),
+                                     containsString("compare failed"));
         }
 
         result = this.client.get(key);
@@ -46,7 +67,10 @@ public class EtcdCASTest {
         params.clear();
         params.put("prevValue", "hello");
         result = this.client.cas(key, "world", params);
-        Assert.assertEquals(false, result.isError());
+        Assert.assertEquals("compareAndSwap", result.action);
+        Assert.assertEquals("world", result.node.value);
+        Assert.assertEquals("hello", result.prevNode.value);
+
         result = this.client.get(key);
         Assert.assertEquals("world", result.node.value);
     }

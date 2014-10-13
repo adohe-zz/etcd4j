@@ -1,7 +1,5 @@
 package com.westudio.java.etcd;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import org.apache.http.*;
 import org.apache.http.client.RedirectStrategy;
@@ -33,8 +31,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class EtcdClient implements Closeable {
-
-    private static final Gson gson = new GsonBuilder().create();
 
     private static final String URI_PREFIX = "v2/keys";
     private static final String DEFAULT_CHARSET = "UTF-8";
@@ -395,14 +391,6 @@ public class EtcdClient implements Closeable {
         }
     }
 
-    public static String format(Object obj) {
-        try {
-            return gson.toJson(obj);
-        } catch (Exception e) {
-            return "Error formatting response" + e.getMessage();
-        }
-    }
-
     private EtcdClientException unwrap(IOException e) {
         if (e instanceof EtcdClientException) {
             return (EtcdClientException) e;
@@ -419,11 +407,18 @@ public class EtcdClient implements Closeable {
     private static EtcdResponse parseResponse(String json) throws EtcdClientException {
         EtcdResponse response;
         try {
-            response = gson.fromJson(json, EtcdResponse.class);
-            // Throw exception when the response has error
-            if (response.isError()) {
-                throw new EtcdClientException("Error response", response);
-            }
+            response = Json.fromJson(json, EtcdResponse.class);
+        } catch (JsonParseException e) {
+            throw new EtcdClientException("Error parsing response", e);
+        }
+
+        return response;
+    }
+
+    private static EtcdErrorResponse parseErrorResponse(String json) throws EtcdClientException {
+        EtcdErrorResponse response;
+        try {
+            response = Json.fromJson(json, EtcdErrorResponse.class);
         } catch (JsonParseException e) {
             throw new EtcdClientException("Error parsing response", e);
         }
@@ -501,6 +496,10 @@ public class EtcdClient implements Closeable {
                 }
             }
 
+            if (statusCode < 200 || statusCode >= 300) {
+                EtcdErrorResponse response = parseErrorResponse(json);
+                throw new EtcdClientException("Error response: " + response.message, response);
+            }
             return parseResponse(json);
         }
     }
