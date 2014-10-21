@@ -1,4 +1,4 @@
-package com.westudio.java.etcd;
+package com.xqbase.etcd4j;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

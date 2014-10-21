@@ -1,7 +1,10 @@
-package com.westudio.java.etcd;
+package com.xqbase.etcd4j;
 
 import com.google.gson.JsonParseException;
-import org.apache.http.*;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
+import org.apache.http.ProtocolException;
 import org.apache.http.client.RedirectStrategy;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.ServiceUnavailableRetryStrategy;
@@ -125,7 +128,7 @@ public class EtcdClient implements Closeable {
      * @param ttl the ttl setting
      * @param prevExist exist before
      * @return response
-     * @throws EtcdClientException
+     * @throws com.xqbase.etcd4j.EtcdClientException
      */
     public EtcdResponse createDir(String key, Integer ttl, Boolean prevExist) throws EtcdClientException {
         List<BasicNameValuePair> data = new ArrayList<BasicNameValuePair>();
@@ -145,7 +148,7 @@ public class EtcdClient implements Closeable {
      * @param key the key
      * @param recursive listing directory recursive or not
      * @return response
-     * @throws EtcdClientException
+     * @throws com.xqbase.etcd4j.EtcdClientException
      */
     public List<EtcdNode> listDir(String key, Boolean recursive) throws EtcdClientException {
         Map<String, String> params = new HashMap<String, String>();
@@ -185,7 +188,7 @@ public class EtcdClient implements Closeable {
     /**
      * Getting etcd version
      * @return the version
-     * @throws IOException
+     * @throws java.io.IOException
      */
     public String getVersion() throws IOException {
         URI uri = baseURI.resolve("version");
@@ -212,7 +215,7 @@ public class EtcdClient implements Closeable {
      * List children under a key
      * @param key the key
      * @return response
-     * @throws EtcdClientException
+     * @throws com.xqbase.etcd4j.EtcdClientException
      */
     public EtcdResponse listChildren(String key) throws EtcdClientException {
         URI uri = buildUriWithKeyAndParams(key + "/", null);
@@ -227,7 +230,7 @@ public class EtcdClient implements Closeable {
      * @param value the new value
      * @param params comparable conditions
      * @return response
-     * @throws EtcdClientException
+     * @throws com.xqbase.etcd4j.EtcdClientException
      */
     public EtcdResponse cas(String key, String value, Map<String, String> params) throws EtcdClientException {
         List<BasicNameValuePair> data = new ArrayList<BasicNameValuePair>();
@@ -241,7 +244,7 @@ public class EtcdClient implements Closeable {
      * @param key the key
      * @param params comparable conditions
      * @return response
-     * @throws EtcdClientException
+     * @throws com.xqbase.etcd4j.EtcdClientException
      */
     public EtcdResponse cad(String key, Map<String, String> params) throws EtcdClientException {
         URI uri = buildUriWithKeyAndParams(key, params);
@@ -255,7 +258,7 @@ public class EtcdClient implements Closeable {
      * @param key the key for the container directory
      * @param value the value
      * @return response
-     * @throws EtcdClientException
+     * @throws com.xqbase.etcd4j.EtcdClientException
      */
     public EtcdResponse inOrderKeys(String key, String value) throws EtcdClientException {
         List<BasicNameValuePair> data = new ArrayList<BasicNameValuePair>();
@@ -268,7 +271,7 @@ public class EtcdClient implements Closeable {
      * Enumerate the in-order keys as a sorted list
      * @param key the directory key
      * @return a sorted list of in-order keys
-     * @throws EtcdClientException
+     * @throws com.xqbase.etcd4j.EtcdClientException
      */
     public List<EtcdNode> listInOrderKeys(String key) throws EtcdClientException {
         Map<String, String> params = new HashMap<String, String>();
@@ -308,7 +311,7 @@ public class EtcdClient implements Closeable {
      * @param data put data
      * @param params url params
      * @return response
-     * @throws EtcdClientException
+     * @throws com.xqbase.etcd4j.EtcdClientException
      */
     private EtcdResponse put(String key, List<BasicNameValuePair> data, Map<String, String> params) throws EtcdClientException {
         URI uri = buildUriWithKeyAndParams(key, params);
@@ -326,7 +329,7 @@ public class EtcdClient implements Closeable {
      * @param data post data
      * @param params url params
      * @return response
-     * @throws EtcdClientException
+     * @throws com.xqbase.etcd4j.EtcdClientException
      */
     private EtcdResponse post(String key, List<BasicNameValuePair> data, Map<String, String> params) throws EtcdClientException {
         URI uri = buildUriWithKeyAndParams(key, params);
@@ -342,7 +345,7 @@ public class EtcdClient implements Closeable {
      * Execute the specific HttpUriRequest
      * @param request request instance
      * @return EtcdResponse
-     * @throws EtcdClientException
+     * @throws com.xqbase.etcd4j.EtcdClientException
      */
     private EtcdResponse execute(HttpUriRequest request) throws EtcdClientException {
         try {

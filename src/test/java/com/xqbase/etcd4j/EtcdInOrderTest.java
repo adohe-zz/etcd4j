@@ -1,4 +1,4 @@
-package com.westudio.java.etcd;
+package com.xqbase.etcd4j;
 
 import org.junit.Assert;
 import org.junit.Before;

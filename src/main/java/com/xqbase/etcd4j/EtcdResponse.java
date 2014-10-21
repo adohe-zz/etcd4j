@@ -1,4 +1,4 @@
-package com.westudio.java.etcd;
+package com.xqbase.etcd4j;
 
 
 public class EtcdResponse {

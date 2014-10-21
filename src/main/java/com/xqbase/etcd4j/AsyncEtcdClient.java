@@ -1,4 +1,4 @@
-package com.westudio.java.etcd;
+package com.xqbase.etcd4j;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
@@ -122,7 +122,7 @@ public class AsyncEtcdClient implements Closeable {
      * Creating directories
      * @param key the dir key
      * @return operation result
-     * @throws EtcdClientException
+     * @throws com.xqbase.etcd4j.EtcdClientException
      */
     public EtcdResponse createDir(String key) throws EtcdClientException {
         return createDir(key, null);
@@ -133,7 +133,7 @@ public class AsyncEtcdClient implements Closeable {
      * @param key the key
      * @param ttl the ttl
      * @return operation result
-     * @throws EtcdClientException
+     * @throws com.xqbase.etcd4j.EtcdClientException
      */
     public EtcdResponse createDir(String key, Integer ttl) throws EtcdClientException {
         List<BasicNameValuePair> data = Lists.newArrayList();
@@ -151,7 +151,7 @@ public class AsyncEtcdClient implements Closeable {
      * @param ttl the ttl
      * @param prevExist exists before
      * @return the result
-     * @throws EtcdClientException
+     * @throws com.xqbase.etcd4j.EtcdClientException
      */
     public EtcdResponse createDir(String key, Integer ttl, Boolean prevExist) throws EtcdClientException {
         List<BasicNameValuePair> data = Lists.newArrayList();
@@ -170,7 +170,7 @@ public class AsyncEtcdClient implements Closeable {
      * Listing a directory
      * @param key the dir key
      * @return a EtcdNode list
-     * @throws EtcdClientException
+     * @throws com.xqbase.etcd4j.EtcdClientException
      */
     public List<EtcdNode> listDir(String key) throws EtcdClientException {
         return listDir(key, false);
@@ -190,7 +190,7 @@ public class AsyncEtcdClient implements Closeable {
      * @param key the dir key
      * @param recursive set recursive=true if the directory holds keys
      * @return operation result
-     * @throws EtcdClientException
+     * @throws com.xqbase.etcd4j.EtcdClientException
      */
     public EtcdResponse deleteDir(String key, Boolean recursive) throws EtcdClientException {
         Map<String, String> params = new HashMap<String, String>();
@@ -212,7 +212,7 @@ public class AsyncEtcdClient implements Closeable {
      * @param value the new value
      * @param params comparable conditions
      * @return operation result
-     * @throws EtcdClientException
+     * @throws com.xqbase.etcd4j.EtcdClientException
      */
     public EtcdResponse cas(String key, String value, Map<String, String> params) throws EtcdClientException {
         List<BasicNameValuePair> data = Lists.newArrayList();
@@ -226,7 +226,7 @@ public class AsyncEtcdClient implements Closeable {
      * @param key the key
      * @param params comparable conditions
      * @return operation result
-     * @throws EtcdClientException
+     * @throws com.xqbase.etcd4j.EtcdClientException
      */
     public EtcdResponse cad(String key, Map<String, String> params) throws EtcdClientException {
         URI uri = buildUriWithKeyAndParams(key, params);
@@ -264,13 +264,13 @@ public class AsyncEtcdClient implements Closeable {
         URI uri = buildUriWithKeyAndParams(key, params);
         HttpGet httpGet = new HttpGet(uri);
 
-        return asyncExecute(httpGet, new int[] {200});
+        return asyncExecute(httpGet, new int[]{200});
     }
 
     /**
      * Getting the etcd version
      * @return the etcd version
-     * @throws EtcdClientException
+     * @throws com.xqbase.etcd4j.EtcdClientException
      */
     public String getVersion() throws EtcdClientException {
         URI uri = baseUri.resolve("version");
@@ -289,7 +289,7 @@ public class AsyncEtcdClient implements Closeable {
      * List children under a key
      * @param key the key
      * @return operation result
-     * @throws EtcdClientException
+     * @throws com.xqbase.etcd4j.EtcdClientException
      */
     public EtcdResponse listChildren(String key) throws EtcdClientException {
         URI uri = buildUriWithKeyAndParams(key + "/", null);
@@ -304,7 +304,7 @@ public class AsyncEtcdClient implements Closeable {
      * @param key the key
      * @param recursive should be recursive
      * @return the result
-     * @throws EtcdClientException
+     * @throws com.xqbase.etcd4j.EtcdClientException
      */
     public EtcdResponse listChildren(String key, Boolean recursive) throws EtcdClientException {
         Map<String, String> params = new HashMap<String, String>();
@@ -380,7 +380,7 @@ public class AsyncEtcdClient implements Closeable {
     private ListenableFuture<EtcdResponse> asyncExecute(final HttpUriRequest request,
                                                         final int[] expectedHttpStatusCodes) {
         ListenableFuture<JsonResponse> response = asyncExecuteJson(request,
-                                                                   expectedHttpStatusCodes);
+                expectedHttpStatusCodes);
         return Futures.transform(response, new AsyncFunction<JsonResponse, EtcdResponse>() {
             @Override
             public ListenableFuture<EtcdResponse> apply(JsonResponse jsonResponse) throws Exception {
@@ -409,7 +409,7 @@ public class AsyncEtcdClient implements Closeable {
             @Override
             public ListenableFuture<JsonResponse> apply(final HttpResponse httpResponse) throws Exception {
                 JsonResponse jsonResponse = extractJsonResponse(httpResponse,
-                                                                expectedHttpStatusCodes);
+                        expectedHttpStatusCodes);
                 return Futures.immediateFuture(jsonResponse);
             }
         });

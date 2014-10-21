@@ -1,4 +1,4 @@
-package com.westudio.java.etcd;
+package com.xqbase.etcd4j;
 
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
@@ -8,6 +8,8 @@ import org.junit.Test;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.hamcrest.CoreMatchers.containsString;
 
 public class EtcdCADTest {
 

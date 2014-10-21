@@ -1,14 +1,12 @@
-package com.westudio.java.etcd;
+package com.xqbase.etcd4j;
 
 import com.google.common.util.concurrent.ListenableFuture;
-
 import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
