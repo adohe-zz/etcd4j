@@ -32,4 +32,12 @@ public class EtcdClientException extends IOException {
     public boolean isEtcdError() {
         return (errorResponse != null && errorResponse.errorCode != null);
     }
+
+    public Integer getHttpStatusCode() {
+        return httpStatusCode;
+    }
+
+    public EtcdErrorResponse getErrorResponse() {
+        return errorResponse;
+    }
 }
