@@ -4,8 +4,21 @@ A more powerful and stable Java client library for the awesome etcd, a highly av
 
 ## Download
 
-This has not been put into the maven repository.
 
+### Maven
+
+```
+<dependency>
+    <groupId>com.xqbase</groupId>
+    <artifactId>etcd4j</artifactId>
+    <version>1.0</version>
+</dependency>
+```
+### Gradle
+
+```
+compile 'com.xqbase:etcd4j:1.0'
+```
 ## Usage
 
 Check out the [EtcdClientTest.java] for more details about how to use this library, but here's a quick code example:
