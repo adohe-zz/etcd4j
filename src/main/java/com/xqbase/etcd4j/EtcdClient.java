@@ -355,7 +355,6 @@ public class EtcdClient implements Closeable {
         }
     }
 
-
     /**
      * Generate URI with key and params
      * @param key key of etcd
