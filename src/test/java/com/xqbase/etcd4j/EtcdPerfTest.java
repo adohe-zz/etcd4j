@@ -3,8 +3,15 @@ package com.xqbase.etcd4j;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -59,7 +66,7 @@ public class EtcdPerfTest {
                 (double)(count * 3 * 1e6 / time));
     }
 
-    /*@Test
+    @Test
     public void testMultThreadsPut() throws ExecutionException, InterruptedException, IOException {
         ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
@@ -109,5 +116,5 @@ public class EtcdPerfTest {
                 (double) (COUNT * 4 * 1e6 / time));
         es.shutdown();
 
-    }*/
+    }
 }
