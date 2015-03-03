@@ -10,6 +10,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
+import com.xqbase.etcd4j.EtcdClientException;
 import org.apache.http.*;
 import org.apache.http.client.RedirectStrategy;
 import org.apache.http.client.config.RequestConfig;
@@ -74,7 +75,7 @@ public class EtcdClient {
      * @param key the key
      * @return the corresponding value
      */
-    public CEtcdResult get(String key) throws CEtcdClientException {
+    public CEtcdResult get(String key) throws EtcdClientException {
         URI uri = buildUriWithKeyAndParams(key, null);
         HttpGet httpGet = new HttpGet(uri);
 
@@ -105,7 +106,7 @@ public class EtcdClient {
      * @param ttl optional key TTL
      * @return operation result
      */
-    public CEtcdResult set(String key, String value, Integer ttl) throws CEtcdClientException {
+    public CEtcdResult set(String key, String value, Integer ttl) throws EtcdClientException {
         List<BasicNameValuePair> list = Lists.newArrayList();
         list.add(new BasicNameValuePair("value", value));
         if (ttl != null) {
@@ -120,7 +121,7 @@ public class EtcdClient {
      * @param key the key
      * @return operation result
      */
-    public CEtcdResult delete(String key) throws CEtcdClientException {
+    public CEtcdResult delete(String key) throws EtcdClientException {
         URI uri = buildUriWithKeyAndParams(key, null);
         HttpDelete delete = new HttpDelete(uri);
 
@@ -131,7 +132,7 @@ public class EtcdClient {
      * Creating directories
      * @param key the dir key
      * @return operation result
-     * @throws CEtcdClientException
+     * @throws EtcdClientException
      */
     public CEtcdResult createDir(String key) throws CEtcdClientException {
         return createDir(key, null);
@@ -142,9 +143,9 @@ public class EtcdClient {
      * @param key the key
      * @param ttl the ttl
      * @return operation result
-     * @throws CEtcdClientException
+     * @throws EtcdClientException
      */
-    public CEtcdResult createDir(String key, Integer ttl) throws CEtcdClientException {
+    public CEtcdResult createDir(String key, Integer ttl) throws EtcdClientException {
         List<BasicNameValuePair> data = Lists.newArrayList();
         data.add(new BasicNameValuePair("dir", String.valueOf(true)));
         if (ttl != null) {
@@ -160,9 +161,9 @@ public class EtcdClient {
      * @param ttl the ttl
      * @param prevExist exists before
      * @return the result
-     * @throws CEtcdClientException
+     * @throws EtcdClientException
      */
-    public CEtcdResult createDir(String key, Integer ttl, Boolean prevExist) throws CEtcdClientException {
+    public CEtcdResult createDir(String key, Integer ttl, Boolean prevExist) throws EtcdClientException {
         List<BasicNameValuePair> data = Lists.newArrayList();
         data.add(new BasicNameValuePair("dir", String.valueOf(true)));
         if (ttl != null) {
@@ -179,13 +180,13 @@ public class EtcdClient {
      * Listing a directory
      * @param key the dir key
      * @return a CEtcdNode list
-     * @throws CEtcdClientException
+     * @throws EtcdClientException
      */
     public List<CEtcdNode> listDir(String key) throws CEtcdClientException {
         return listDir(key, false);
     }
 
-    private List<CEtcdNode> listDir(String key, Boolean recursive) throws CEtcdClientException {
+    private List<CEtcdNode> listDir(String key, Boolean recursive) throws EtcdClientException {
         CEtcdResult result = get(key + "/");
         if (result == null || result.node == null) {
             return null;
@@ -199,9 +200,9 @@ public class EtcdClient {
      * @param key the dir key
      * @param recursive set recursive=true if the directory holds keys
      * @return operation result
-     * @throws CEtcdClientException
+     * @throws EtcdClientException
      */
-    public CEtcdResult deleteDir(String key, Boolean recursive) throws CEtcdClientException {
+    public CEtcdResult deleteDir(String key, Boolean recursive) throws EtcdClientException {
         Map<String, String> params = new HashMap<String, String>();
         if (recursive) {
             params.put("recursive", String.valueOf(true));
@@ -221,9 +222,9 @@ public class EtcdClient {
      * @param value the new value
      * @param params comparable conditions
      * @return operation result
-     * @throws CEtcdClientException
+     * @throws EtcdClientException
      */
-    public CEtcdResult cas(String key, String value, Map<String, String> params) throws CEtcdClientException {
+    public CEtcdResult cas(String key, String value, Map<String, String> params) throws EtcdClientException {
         List<BasicNameValuePair> data = Lists.newArrayList();
         data.add(new BasicNameValuePair("value", value));
 
@@ -235,9 +236,9 @@ public class EtcdClient {
      * @param key the key
      * @param params comparable conditions
      * @return operation result
-     * @throws CEtcdClientException
+     * @throws EtcdClientException
      */
-    public CEtcdResult cad(String key, Map<String, String> params) throws CEtcdClientException {
+    public CEtcdResult cad(String key, Map<String, String> params) throws EtcdClientException {
         URI uri = buildUriWithKeyAndParams(key, params);
         HttpDelete httpDelete = new HttpDelete(uri);
 
@@ -279,16 +280,16 @@ public class EtcdClient {
     /**
      * Getting the etcd version
      * @return the etcd version
-     * @throws CEtcdClientException
+     * @throws EtcdClientException
      */
-    public String getVersion() throws CEtcdClientException {
+    public String getVersion() throws EtcdClientException {
         URI uri = baseUri.resolve("version");
 
         HttpGet httpGet = new HttpGet(uri);
 
         JsonResponse jsonResponse = syncExecuteJson(httpGet, 200);
         if (jsonResponse.httpStatusCode != 200) {
-            throw new CEtcdClientException("Error while get etcd version", jsonResponse.httpStatusCode);
+            throw new EtcdClientException("Error while get etcd version", jsonResponse.httpStatusCode);
         }
 
         return jsonResponse.json;
@@ -298,9 +299,9 @@ public class EtcdClient {
      * List children under a key
      * @param key the key
      * @return operation result
-     * @throws CEtcdClientException
+     * @throws EtcdClientException
      */
-    public CEtcdResult listChildren(String key) throws CEtcdClientException {
+    public CEtcdResult listChildren(String key) throws EtcdClientException {
         URI uri = buildUriWithKeyAndParams(key + "/", null);
 
         HttpGet httpGet = new HttpGet(uri);
@@ -313,9 +314,9 @@ public class EtcdClient {
      * @param key the key
      * @param recursive should be recursive
      * @return the result
-     * @throws CEtcdClientException
+     * @throws EtcdClientException
      */
-    public CEtcdResult listChildren(String key, Boolean recursive) throws CEtcdClientException {
+    public CEtcdResult listChildren(String key, Boolean recursive) throws EtcdClientException {
         Map<String, String> params = new HashMap<String, String>();
         if (recursive != null) {
             params.put("recursive", String.valueOf(recursive));
@@ -369,7 +370,7 @@ public class EtcdClient {
 
     // The basic put operation
     private CEtcdResult put(String key, List<BasicNameValuePair> data, Map<String, String> params, int[] httpErrorCodes,
-                            int... expectedErrorCodes) throws CEtcdClientException {
+                            int... expectedErrorCodes) throws EtcdClientException {
         URI uri = buildUriWithKeyAndParams(key, params);
         HttpPut httpPut = new HttpPut(uri);
 
@@ -379,29 +380,29 @@ public class EtcdClient {
         return syncExecute(httpPut, httpErrorCodes, expectedErrorCodes);
     }
 
-    private CEtcdResult syncExecute(HttpUriRequest request, int[] expectedHttpStatusCodes, final int... exceptedErrorCodes) throws CEtcdClientException {
+    private CEtcdResult syncExecute(HttpUriRequest request, int[] expectedHttpStatusCodes, final int... exceptedErrorCodes) throws EtcdClientException {
         try {
             return asyncExecute(request, expectedHttpStatusCodes, exceptedErrorCodes).get(FUTURE_TIMEOUT, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
 
-            throw new CEtcdClientException("InterruptedException", e);
+            throw new EtcdClientException("InterruptedException", e);
         } catch (TimeoutException e) {
-            throw new CEtcdClientException("TimeoutException", e);
+            throw new EtcdClientException("TimeoutException", e);
         } catch (ExecutionException e) {
             throw unwrap(e);
         }
     }
 
-    private JsonResponse syncExecuteJson(HttpUriRequest request, int... exceptedHttpStatusCodes) throws CEtcdClientException {
+    private JsonResponse syncExecuteJson(HttpUriRequest request, int... exceptedHttpStatusCodes) throws EtcdClientException {
         try {
             return asyncExecuteJson(request, exceptedHttpStatusCodes).get(FUTURE_TIMEOUT, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
 
-            throw new CEtcdClientException("InterruptedException", e);
+            throw new EtcdClientException("InterruptedException", e);
         } catch (TimeoutException e) {
-            throw new CEtcdClientException("TimeoutException", e);
+            throw new EtcdClientException("TimeoutException", e);
         } catch (ExecutionException e) {
             throw unwrap(e);
         }
@@ -482,12 +483,12 @@ public class EtcdClient {
         return future;
     }
 
-    private CEtcdClientException unwrap(ExecutionException e) {
+    private EtcdClientException unwrap(ExecutionException e) {
         Throwable cause = e.getCause();
-        if (cause instanceof CEtcdClientException) {
-            return (CEtcdClientException)cause;
+        if (cause instanceof EtcdClientException) {
+            return (EtcdClientException)cause;
         } else {
-            return new CEtcdClientException("Failed to execute request", e);
+            return new EtcdClientException("Failed to execute request", e);
         }
     }
 
@@ -526,7 +527,7 @@ public class EtcdClient {
         }
     }
 
-    private JsonResponse extractJsonResponse(HttpResponse response, int[] expectedHttpStatusCode) throws CEtcdClientException {
+    private JsonResponse extractJsonResponse(HttpResponse response, int[] expectedHttpStatusCode) throws EtcdClientException {
         try {
             StatusLine statusLine = response.getStatusLine();
             int statusCode = statusLine.getStatusCode();
@@ -537,7 +538,7 @@ public class EtcdClient {
                 try {
                     json = EntityUtils.toString(response.getEntity(), DEFAULT_CHARSET);
                 } catch (IOException e) {
-                    throw new CEtcdClientException("Error reading response", e);
+                    throw new EtcdClientException("Error reading response", e);
                 }
             }
 
@@ -545,7 +546,7 @@ public class EtcdClient {
                 if (statusCode == 404 && json != null) {
                     // More info in json
                 } else {
-                    throw new CEtcdClientException("Error response from etcd: " + statusLine.getReasonPhrase(),
+                    throw new EtcdClientException("Error response from etcd: " + statusLine.getReasonPhrase(),
                             statusCode);
                 }
             }
@@ -556,7 +557,7 @@ public class EtcdClient {
         }
     }
 
-    private CEtcdResult jsonToCEtcdResult(JsonResponse jsonResponse, int... exceptedErrorCodes) throws CEtcdClientException {
+    private CEtcdResult jsonToCEtcdResult(JsonResponse jsonResponse, int... exceptedErrorCodes) throws EtcdClientException {
         if (jsonResponse == null || jsonResponse.json == null) {
             return null;
         }
@@ -565,19 +566,19 @@ public class EtcdClient {
 
         if (result.isError()) {
             if (!contains(exceptedErrorCodes, result.errorCode)) {
-                throw new CEtcdClientException(result.message, result);
+                throw new EtcdClientException(result.message, result);
             }
         }
 
         return result;
     }
 
-    private CEtcdResult parseCEtcdResult(String json) throws CEtcdClientException{
+    private CEtcdResult parseCEtcdResult(String json) throws EtcdClientException{
         CEtcdResult result;
         try {
             result = gson.fromJson(json, CEtcdResult.class);
         } catch (JsonParseException e) {
-            throw new CEtcdClientException("Error parsing response", e);
+            throw new EtcdClientException("Error parsing response", e);
         }
 
         return result;
