@@ -2,7 +2,7 @@ package com.xqbase.etcd4j;
 
 import java.util.List;
 
-public class CEtcdNode {
+public class EtcdNode {
 
     public String key;
     public long createdIndex;
@@ -15,5 +15,5 @@ public class CEtcdNode {
 
     // For listings
     public boolean dir;
-    public List<CEtcdNode> nodes;
+    public List<EtcdNode> nodes;
 }

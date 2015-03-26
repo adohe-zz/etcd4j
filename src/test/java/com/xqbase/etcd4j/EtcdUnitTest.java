@@ -14,12 +14,12 @@ import java.util.UUID;
 public class EtcdUnitTest {
 
     private String prefix;
-    private CEtcdClient client;
+    private EtcdClient client;
 
     @Before
     public void setUp() throws Exception {
         this.prefix = "/unittest-" + UUID.randomUUID().toString();
-        this.client = new CEtcdClient(URI.create("http://127.0.0.1:4001/"));
+        this.client = new EtcdClient(URI.create("http://127.0.0.1:4001/"));
     }
 
     @After
@@ -30,7 +30,7 @@ public class EtcdUnitTest {
 
         try {
             client.deleteDir(prefix, true);
-        } catch (CEtcdClientException e) {}
+        } catch (EtcdClientException e) {}
     }
 
     @Test
@@ -78,7 +78,7 @@ public class EtcdUnitTest {
         try {
 			this.client.delete(key);
             Assert.fail();
-        } catch (CEtcdClientException e) {
+        } catch (EtcdClientException e) {
             Assert.assertTrue(e.isEtcdError(100));
         }
     }
@@ -128,7 +128,7 @@ public class EtcdUnitTest {
 
         this.client.createDir(key);
 
-        List<CEtcdNode> list = this.client.listDir(prefix);
+        List<EtcdNode> list = this.client.listDir(prefix);
         Assert.assertTrue(list.size() == 1);
         list = this.client.listDir(key);
         Assert.assertNull(list);
@@ -140,7 +140,7 @@ public class EtcdUnitTest {
 
         this.client.createDir(key, 2);
 
-        List<CEtcdNode> list = this.client.listDir(prefix);
+        List<EtcdNode> list = this.client.listDir(prefix);
 
         Assert.assertTrue(list.size() == 1);
 
@@ -154,7 +154,7 @@ public class EtcdUnitTest {
     public void testListDirNotExist() throws Exception {
         String key = prefix + "/listdirnotexist";
 
-        List<CEtcdNode> list = this.client.listDir(key);
+        List<EtcdNode> list = this.client.listDir(key);
         Assert.assertNull(list);
     }
 
@@ -169,9 +169,9 @@ public class EtcdUnitTest {
         this.client.set(key + "/f3", "f3");
         this.client.set(key + "/subdir1/f", "f");
 
-        List<CEtcdNode> list = this.client.listDir(key);
+        List<EtcdNode> list = this.client.listDir(key);
         Assert.assertTrue(list.size() == 4);
-        for (CEtcdNode node : list) {
+        for (EtcdNode node : list) {
             if ("/subdir1".equals(node.key)) {
                 Assert.assertNull(node.nodes);
             }
@@ -189,9 +189,9 @@ public class EtcdUnitTest {
         this.client.set(key + "/f3", "f3");
         this.client.set(key + "/subdir1/f", "f");
 
-        List<CEtcdNode> list = this.client.listDir(key, true);
+        List<EtcdNode> list = this.client.listDir(key, true);
         Assert.assertTrue(list.size() == 4);
-        for (CEtcdNode node : list) {
+        for (EtcdNode node : list) {
             if ("/subdir1".equals(node.key)) {
                 Assert.assertTrue(node.nodes.size() == 1);
             }
@@ -204,7 +204,7 @@ public class EtcdUnitTest {
 
         this.client.createDir(key);
 
-        List<CEtcdNode> list = this.client.listDir(prefix);
+        List<EtcdNode> list = this.client.listDir(prefix);
         Assert.assertTrue(list.size() == 1);
         Assert.assertTrue(list.get(0).key.equals(key));
 
@@ -221,7 +221,7 @@ public class EtcdUnitTest {
         try {
             this.client.deleteDir(key, false);
             Assert.fail();
-        } catch (CEtcdClientException e) {
+        } catch (EtcdClientException e) {
             Assert.assertTrue(e.isEtcdError(100));
         }
     }
@@ -233,14 +233,14 @@ public class EtcdUnitTest {
         this.client.createDir(key);
 
         this.client.set(key + "/f1", "f1");
-        List<CEtcdNode> list = this.client.listDir(key);
+        List<EtcdNode> list = this.client.listDir(key);
         Assert.assertTrue(list.size() == 1);
         Assert.assertTrue(list.get(0).key.equals(key + "/f1"));
 
         try {
             this.client.deleteDir(key, false);
             Assert.fail();
-        } catch (CEtcdClientException e) {
+        } catch (EtcdClientException e) {
             Assert.assertTrue(e.isEtcdError(108));
         }
 
@@ -256,7 +256,7 @@ public class EtcdUnitTest {
         this.client.createDir(key);
 
         this.client.set(key + "/f1", "f1");
-        List<CEtcdNode> list = this.client.listDir(key);
+        List<EtcdNode> list = this.client.listDir(key);
         Assert.assertTrue(list.size() == 1);
         Assert.assertTrue(list.get(0).key.equals(key + "/f1"));
 
@@ -270,7 +270,7 @@ public class EtcdUnitTest {
     public void testCAS() throws Exception {
         String key = prefix + "/cas";
 
-        CEtcdResult result;
+        EtcdResult result;
 
         this.client.set(key, "hello");
         String value = this.client.get(key);
@@ -295,7 +295,7 @@ public class EtcdUnitTest {
     public void testCAD() throws Exception {
         String key = prefix + "/cad";
 
-        CEtcdResult result;
+        EtcdResult result;
 
         this.client.set(key, "hello");
         String value = this.client.get(key);

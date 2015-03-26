@@ -22,7 +22,7 @@ import static org.junit.Assert.assertNotNull;
 @RunWith(Parameterized.class)
 public class EtcdPerfTest {
 
-    private CEtcdClient client;
+    private EtcdClient client;
     private static final int N_THREADS = 8;
 
     @Parameterized.Parameter(value = 0)
@@ -39,7 +39,7 @@ public class EtcdPerfTest {
 
     @Before
     public void setUp() throws Exception {
-        this.client = new CEtcdClient(URI.create("http://localhost:4001/"));
+        this.client = new EtcdClient(URI.create("http://localhost:4001/"));
     }
 
     @After
@@ -50,7 +50,7 @@ public class EtcdPerfTest {
 
         try {
             client.deleteDir(prefix, true);
-        } catch (CEtcdClientException e) {}
+        } catch (EtcdClientException e) {}
     }
 
     @Test

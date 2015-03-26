@@ -1,11 +1,11 @@
 package com.xqbase.etcd4j;
 
-public class CEtcdResult {
+public class EtcdResult {
 
     // General values
     public String action;
-    public CEtcdNode node;
-    public CEtcdNode prevNode;
+    public EtcdNode node;
+    public EtcdNode prevNode;
 
     // For errors
     public Integer errorCode;

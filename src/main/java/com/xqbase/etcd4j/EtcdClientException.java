@@ -2,27 +2,27 @@ package com.xqbase.etcd4j;
 
 import java.io.IOException;
 
-public class CEtcdClientException extends IOException {
+public class EtcdClientException extends IOException {
 
     private static final long serialVersionUID = 1L;
 
     final Integer httpStatusCode;
 
-    final CEtcdResult result;
+    final EtcdResult result;
 
-    public CEtcdClientException(String message, Throwable cause) {
+    public EtcdClientException(String message, Throwable cause) {
         super(message, cause);
         this.httpStatusCode = null;
         this.result = null;
     }
 
-    public CEtcdClientException(String message, int httpStatusCode) {
+    public EtcdClientException(String message, int httpStatusCode) {
         super(message + "(" + httpStatusCode + ")");
         this.httpStatusCode = httpStatusCode;
         this.result = null;
     }
 
-    public CEtcdClientException(String message, CEtcdResult result) {
+    public EtcdClientException(String message, EtcdResult result) {
         super(message);
         this.httpStatusCode = null;
         this.result = result;

@@ -26,7 +26,7 @@ public class EtcdTimeoutTest {
     private static final int MAX_ALLOWED_TIMEOUT = 12 * 1000;
 
     private static Server server;
-    private CEtcdClient client;
+    private EtcdClient client;
     private String key = "/timeout";
 
     @BeforeClass
@@ -42,7 +42,7 @@ public class EtcdTimeoutTest {
 
     @Before
     public void setUp() throws Exception {
-        this.client = new CEtcdClient(URI.create("http://127.0.0.1:" + PORT));
+        this.client = new EtcdClient(URI.create("http://127.0.0.1:" + PORT));
     }
 
     @AfterClass
@@ -57,7 +57,7 @@ public class EtcdTimeoutTest {
         long start = System.currentTimeMillis();
         try {
             this.client.get(key);
-        } catch (CEtcdClientException e) {
+        } catch (EtcdClientException e) {
             validateTestResult(e, start);
         }
     }
@@ -67,7 +67,7 @@ public class EtcdTimeoutTest {
         long start = System.currentTimeMillis();
         try {
             this.client.set(key, "TestValue");
-        } catch (CEtcdClientException e) {
+        } catch (EtcdClientException e) {
             validateTestResult(e, start);
         }
     }
@@ -77,12 +77,12 @@ public class EtcdTimeoutTest {
         long start = System.currentTimeMillis();
         try {
             this.client.listDir(key, true);
-        } catch (CEtcdClientException e) {
+        } catch (EtcdClientException e) {
             validateTestResult(e, start);
         }
     }
 
-    private void validateTestResult(CEtcdClientException e, long start) {
+    private void validateTestResult(EtcdClientException e, long start) {
         long cost = System.currentTimeMillis() - start;
         Assert.assertTrue(cost >= TIMEOUT && cost <= MAX_ALLOWED_TIMEOUT);
         Exception cause = (Exception) e.getCause();
