@@ -1,6 +1,6 @@
 # etcd4j: Java binding for etcd
 
-A more powerful and stable Java client library for the awesome etcd, a highly available key value store. This library is based on Apache HttpClient and HttpAsyncClient, provides both sync and async version. It supports all key based etcd requests, adds request redirect handler and retry handler, which is really useful when you put etcd into production cluster.
+A more powerful and stable Java client library for the awesome etcd, a highly available key value store. This library is based on Apache HttpAsyncClient, provides async api. It supports all key based etcd requests, adds request redirect handler and retry handler, which is really useful when you put etcd into production cluster.**This library has been used in real production for period of time.**
 
 ## Download
 
@@ -11,13 +11,13 @@ A more powerful and stable Java client library for the awesome etcd, a highly av
 <dependency>
     <groupId>com.xqbase</groupId>
     <artifactId>etcd4j</artifactId>
-    <version>1.0</version>
+    <version>1.1</version>
 </dependency>
 ```
 ### Gradle
 
 ```
-compile 'com.xqbase:etcd4j:1.0'
+compile 'com.xqbase:etcd4j:1.1'
 ```
 ## Usage
 
