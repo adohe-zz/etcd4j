@@ -6,13 +6,13 @@
 
     <groupId>com.xqbase</groupId>
     <artifactId>etcd4j</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
     <packaging>jar</packaging>
 
     <name>etcd4j</name>
     <url>https://github.com/AdoHe/etcd4j</url>
 
-    <description>A more powerful and stable etcd java client</description>
+    <description>An async ETCD Java Client.</description>
     <scm>
         <connection>scm:git:git@github.com:AdoHe/etcd4j.git</connection>
         <developerConnection>scm:git:git@github.com:AdoHe/etcd4j.git</developerConnection>
@@ -52,13 +52,8 @@
     <dependencies>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.3.5</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpasyncclient</artifactId>
-            <version>4.0-beta4</version>
+            <version>4.0.2</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>

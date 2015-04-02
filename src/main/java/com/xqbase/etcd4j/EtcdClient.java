@@ -1,6 +1,7 @@
 package com.xqbase.etcd4j;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.*;
@@ -26,6 +27,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
 
+/**
+ * An async ETCD Java Client.
+ *
+ * @author Tony He
+ */
 public class EtcdClient {
 
     private static final CloseableHttpAsyncClient httpClient = buildHttpClient();
@@ -52,7 +58,6 @@ public class EtcdClient {
                 .setConnectionRequestTimeout(DEFAULT_CONNECTION_REQUEST_TIMEOUT)
                 .setConnectTimeout(DEFAULT_CONNECT_TIMEOUT)
                 .setSocketTimeout(DEFAULT_SOCKET_TIMEOUT)
-                .setRedirectsEnabled(true)
                 .build();
 
         CloseableHttpAsyncClient httpAsyncClient = HttpAsyncClients.custom()
@@ -79,6 +84,8 @@ public class EtcdClient {
      * @return the corresponding value
      */
     public String get(String key) throws EtcdClientException {
+        Preconditions.checkNotNull(key, "key can't be null");
+
         URI uri = buildUriWithKeyAndParams(key, null);
         HttpGet httpGet = new HttpGet(uri);
 
@@ -119,6 +126,9 @@ public class EtcdClient {
      * @param prevExist exists before
      */
     public void set(String key, String value, Integer ttl, Boolean prevExist) throws EtcdClientException {
+        Preconditions.checkNotNull(key);
+        Preconditions.checkNotNull(value);
+
         List<BasicNameValuePair> list = Lists.newArrayList();
         list.add(new BasicNameValuePair("value", value));
         if (ttl != null) {
@@ -137,6 +147,8 @@ public class EtcdClient {
      * @return operation result
      */
     public void delete(String key) throws EtcdClientException {
+        Preconditions.checkNotNull(key);
+
         URI uri = buildUriWithKeyAndParams(key, null);
         HttpDelete delete = new HttpDelete(uri);
 
@@ -170,6 +182,8 @@ public class EtcdClient {
      * @throws EtcdClientException
      */
     public void createDir(String key, Integer ttl, Boolean prevExist) throws EtcdClientException {
+        Preconditions.checkNotNull(key);
+
         List<BasicNameValuePair> data = Lists.newArrayList();
         data.add(new BasicNameValuePair("dir", String.valueOf(true)));
         if (ttl != null) {
@@ -200,6 +214,8 @@ public class EtcdClient {
      * @throws EtcdClientException
      */
     public List<EtcdNode> listDir(String key, Boolean recursive) throws EtcdClientException {
+        Preconditions.checkNotNull(key);
+
         Map<String, String> params = new HashMap<String, String>();
         if (recursive) {
             params.put("recursive", String.valueOf(true));
@@ -224,6 +240,8 @@ public class EtcdClient {
      * @throws EtcdClientException
      */
     public void deleteDir(String key, Boolean recursive) throws EtcdClientException {
+        Preconditions.checkNotNull(key);
+
         Map<String, String> params = new HashMap<String, String>();
         if (recursive) {
             params.put("recursive", String.valueOf(true));
