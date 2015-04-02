@@ -11,13 +11,13 @@ A more powerful and stable Java client library for the awesome etcd, a highly av
 <dependency>
     <groupId>com.xqbase</groupId>
     <artifactId>etcd4j</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
 </dependency>
 ```
 ### Gradle
 
 ```
-compile 'com.xqbase:etcd4j:1.1'
+compile 'com.xqbase:etcd4j:1.2'
 ```
 ## Usage
 
@@ -28,14 +28,14 @@ EtcdClient client = new EtcdClient(URI.create("http://127.0.0.1:4001"));
 
 String key = "/message";
 // set the key
-EtcdResponse response = client.set(key, "beepboop");
-Assert.assertEquals("set", response.action);
-Assert.assertEquals("beepboop", response.node.value);
+client.set(key, "beepboop");
 // get the value of the key
-response = client.get(key);
-Assert.assertEquals("beepboop", response.node.value);
+String value = client.get(key);
+Assert.assertEquals("beepboop", value);
 // delete the key
-response = client.delete(key);
+client.delete(key);
+value = client.get(key);
+Assert.assertNull(value);
 ```
 ## Licence
 
