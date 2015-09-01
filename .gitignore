@@ -5,5 +5,7 @@ pom.xml.versionsBackup
 pom.xml.next
 release.properties
 .idea/
-target/
 etcd4j.iml
+.classpath
+.project
+.settings/

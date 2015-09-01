@@ -144,7 +144,7 @@ public class EtcdClient {
     /**
      * Delete a key
      * @param key the key
-     * @return operation result
+     * // @return operation result
      */
     public void delete(String key) throws EtcdClientException {
         Preconditions.checkNotNull(key);
@@ -236,7 +236,7 @@ public class EtcdClient {
      * Deleting a directory
      * @param key the dir key
      * @param recursive set recursive=true if the directory holds keys
-     * @return operation result
+     * // @return operation result
      * @throws EtcdClientException
      */
     public void deleteDir(String key, Boolean recursive) throws EtcdClientException {
