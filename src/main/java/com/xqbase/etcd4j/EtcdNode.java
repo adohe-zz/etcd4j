@@ -11,7 +11,7 @@ public class EtcdNode {
 
     // For TTL keys
     public String expiration;
-    public Integer ttl;
+    public int ttl;
 
     // For listings
     public boolean dir;

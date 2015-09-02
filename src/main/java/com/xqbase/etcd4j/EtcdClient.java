@@ -105,7 +105,7 @@ public class EtcdClient {
      * @param value the value
      */
     public void set(String key, String value) throws EtcdClientException {
-        set(key, value, null);
+        set(key, value, 0);
     }
 
     /**
@@ -114,7 +114,7 @@ public class EtcdClient {
      * @param value the value
      * @param ttl optional key TTL
      */
-    public void set(String key, String value, Integer ttl) throws EtcdClientException {
+    public void set(String key, String value, int ttl) throws EtcdClientException {
         set(key, value, ttl, null);
     }
 
@@ -125,13 +125,13 @@ public class EtcdClient {
      * @param ttl the ttl
      * @param prevExist exists before
      */
-    public void set(String key, String value, Integer ttl, Boolean prevExist) throws EtcdClientException {
+    public void set(String key, String value, int ttl, Boolean prevExist) throws EtcdClientException {
         Preconditions.checkNotNull(key);
         Preconditions.checkNotNull(value);
 
         List<BasicNameValuePair> list = Lists.newArrayList();
         list.add(new BasicNameValuePair("value", value));
-        if (ttl != null) {
+        if (ttl > 0) {
             list.add(new BasicNameValuePair("ttl", String.valueOf(ttl)));
         }
         if (prevExist != null) {
@@ -161,7 +161,7 @@ public class EtcdClient {
      * @throws EtcdClientException
      */
     public void createDir(String key) throws EtcdClientException {
-        createDir(key, null);
+        createDir(key, 0);
     }
 
     /**
@@ -170,7 +170,7 @@ public class EtcdClient {
      * @param ttl the ttl
      * @throws EtcdClientException
      */
-    public void createDir(String key, Integer ttl) throws EtcdClientException {
+    public void createDir(String key, int ttl) throws EtcdClientException {
         createDir(key, ttl, null);
     }
 
@@ -181,12 +181,12 @@ public class EtcdClient {
      * @param prevExist exists before
      * @throws EtcdClientException
      */
-    public void createDir(String key, Integer ttl, Boolean prevExist) throws EtcdClientException {
+    public void createDir(String key, int ttl, Boolean prevExist) throws EtcdClientException {
         Preconditions.checkNotNull(key);
 
         List<BasicNameValuePair> data = Lists.newArrayList();
         data.add(new BasicNameValuePair("dir", String.valueOf(true)));
-        if (ttl != null) {
+        if (ttl > 0) {
             data.add(new BasicNameValuePair("ttl", String.valueOf(ttl)));
         }
         if (prevExist != null) {
@@ -213,7 +213,7 @@ public class EtcdClient {
      * @return CEtcdNode list
      * @throws EtcdClientException
      */
-    public List<EtcdNode> listDir(String key, Boolean recursive) throws EtcdClientException {
+    public List<EtcdNode> listDir(String key, boolean recursive) throws EtcdClientException {
         Preconditions.checkNotNull(key);
 
         Map<String, String> params = new HashMap<String, String>();
@@ -225,7 +225,7 @@ public class EtcdClient {
         HttpGet httpGet = new HttpGet(uri);
 
         EtcdResult result = syncExecute(httpGet, new int[] {200, 404}, 100);
-        if (result == null || result.node == null) {
+        if (null == result || null == result.node) {
             return null;
         }
 
@@ -239,7 +239,7 @@ public class EtcdClient {
      * // @return operation result
      * @throws EtcdClientException
      */
-    public void deleteDir(String key, Boolean recursive) throws EtcdClientException {
+    public void deleteDir(String key, boolean recursive) throws EtcdClientException {
         Preconditions.checkNotNull(key);
 
         Map<String, String> params = new HashMap<String, String>();
@@ -290,7 +290,7 @@ public class EtcdClient {
      * @return a future result
      */
     public ListenableFuture<EtcdResult> watch(String key) {
-        return watch(key, null, false);
+        return watch(key, 0L, false);
     }
 
     /**
@@ -300,10 +300,10 @@ public class EtcdClient {
      * @param recursive set recursive true if you want to watch for child keys
      * @return a future result
      */
-    public ListenableFuture<EtcdResult> watch(String key, Long index, boolean recursive) {
+    public ListenableFuture<EtcdResult> watch(String key, long index, boolean recursive) {
         Map<String, String> params = new HashMap<String, String>();
         params.put("wait", String.valueOf(true));
-        if (index != null) {
+        if (index > 0) {
             params.put("waitIndex", String.valueOf(index));
         }
         if (recursive) {

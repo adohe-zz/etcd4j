@@ -8,12 +8,12 @@ public class EtcdResult {
     public EtcdNode prevNode;
 
     // For errors
-    public Integer errorCode;
+    public int errorCode;
     public String message;
     public String cause;
     public int index;
 
     public boolean isError() {
-        return errorCode != null;
+        return errorCode != 0;
     }
 }
