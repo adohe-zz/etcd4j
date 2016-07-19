@@ -18,6 +18,7 @@ import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -32,7 +33,7 @@ import java.util.concurrent.*;
  *
  * @author Tony He
  */
-public class EtcdClient {
+public class EtcdClient implements Closeable {
 
     private static final CloseableHttpAsyncClient httpClient = buildHttpClient();
     private static final Gson gson = new GsonBuilder().create();
@@ -314,6 +315,20 @@ public class EtcdClient {
         HttpGet httpGet = new HttpGet(uri);
 
         return asyncExecute(httpGet, new int[] {200});
+    }
+
+    /**
+     * Closes this stream and releases any system resources associated
+     * with it. If the stream is already closed then invoking this
+     * method has no effect.
+     *
+     * @throws IOException if an I/O error occurs
+     */
+    @Override
+    public void close() throws IOException {
+        if (httpClient != null) {
+            httpClient.close();
+        }
     }
 
     // The basic put operation
