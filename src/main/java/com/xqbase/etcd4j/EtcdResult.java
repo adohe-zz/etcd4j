@@ -11,7 +11,7 @@ public class EtcdResult {
     public int errorCode;
     public String message;
     public String cause;
-    public int index;
+    public long index;
 
     public boolean isError() {
         return errorCode != 0;
